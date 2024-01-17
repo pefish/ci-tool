@@ -24,6 +24,6 @@ func (c CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_b
 	}
 }
 
-func (c CiManagerType) Exited() {
+func (c CiManagerType) OnExited() {
 
 }

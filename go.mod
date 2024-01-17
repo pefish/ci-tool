@@ -20,7 +20,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/pefish/go-best-type v0.0.5 // indirect
+	github.com/pefish/go-best-type v0.0.6 // indirect
 	github.com/pefish/go-commander v0.5.2 // indirect
 	github.com/pefish/go-config v0.3.0 // indirect
 	github.com/pefish/go-decimal v0.3.3 // indirect
