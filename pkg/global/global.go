@@ -3,7 +3,8 @@ package global
 import ci_manager "github.com/pefish/ci-tool/pkg/ci-manager"
 
 type Config struct {
-	ServerPort uint64 `json:"serverPort"`
+	ServerHost string `json:"server-host"`
+	ServerPort uint64 `json:"server-port"`
 	//Db   struct {
 	//	Db       string `json:"db"`
 	//	Host     string `json:"host"`

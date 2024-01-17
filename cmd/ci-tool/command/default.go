@@ -2,6 +2,7 @@ package command
 
 import (
 	"flag"
+	"fmt"
 	ci_manager "github.com/pefish/ci-tool/pkg/ci-manager"
 	"github.com/pefish/ci-tool/pkg/constant"
 	"github.com/pefish/ci-tool/pkg/global"
@@ -24,8 +25,8 @@ func NewDefaultCommand() *DefaultCommand {
 }
 
 func (dc *DefaultCommand) DecorateFlagSet(flagSet *flag.FlagSet) error {
-	flagSet.String("host", "127.0.0.1", "The host of web server.")
-	flagSet.Int("port", 8000, "The port of web server.")
+	flagSet.String("server-host", "127.0.0.1", "The host of web server.")
+	flagSet.Int("server-port", 8000, "The port of web server.")
 	return nil
 }
 
@@ -46,8 +47,9 @@ func (dc *DefaultCommand) Init(data *commander.StartData) error {
 	go func() {
 		global.CiManager.Listen(global.CiManager, nil)
 	}()
+	fmt.Println(global.GlobalConfig.ServerPort)
 
-	service.Service.SetHost("0.0.0.0")
+	service.Service.SetHost(global.GlobalConfig.ServerHost)
 	service.Service.SetPort(global.GlobalConfig.ServerPort)
 	service.Service.SetPath(`/api`)
 	global_api_strategy.ParamValidateStrategyInstance.SetErrorCode(constant.PARAM_ERROR)
