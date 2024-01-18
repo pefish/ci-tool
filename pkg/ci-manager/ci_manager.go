@@ -29,11 +29,13 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 		scriptPath := data["script_path"].(string)
 		projectName := data["project_name"].(string)
 		go func() {
+			fmt.Printf("<%s> 正在部署...", projectName)
 			c.logs.Delete(projectName)
 			err := c.startCi(srcPath, scriptPath, projectName)
 			if err != nil {
 				c.logs.Store(projectName, err.Error())
 			}
+			fmt.Printf("<%s> 部署成功", projectName)
 		}()
 	case constant.ActionType_LOG:
 		msg := data["msg"].(string)
@@ -74,6 +76,7 @@ git checkout test && git pull
 		for {
 			select {
 			case r := <-resultChan:
+				fmt.Println(r)
 				d, ok := c.logs.Load(projectName)
 				if !ok {
 					c.logs.Store(projectName, r)
