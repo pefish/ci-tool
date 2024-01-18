@@ -30,7 +30,7 @@ require (
 	github.com/pefish/go-format v0.3.0 // indirect
 	github.com/pefish/go-json v0.1.7 // indirect
 	github.com/pefish/go-reflect v0.2.2 // indirect
-	github.com/pefish/go-shell v0.0.6 // indirect
+	github.com/pefish/go-shell v0.0.7 // indirect
 	github.com/pefish/go-string v0.1.2 // indirect
 	github.com/pefish/go-task-driver v0.2.1 // indirect
 	github.com/pefish/go-test-assert v0.0.2 // indirect

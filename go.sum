@@ -76,6 +76,8 @@ github.com/pefish/go-shell v0.0.5 h1:7aumpSvHStobPgvF/7pbbDUtSsJqTGWzTBQU4KSWPIo
 github.com/pefish/go-shell v0.0.5/go.mod h1:8zAuLoehTG/++Ql0h4JZNBtVCE/coFmWAK5C1hHA7a8=
 github.com/pefish/go-shell v0.0.6 h1:bGw3FOP7LLfVXZG1dSG5tKLmEJNUyRNY2POqKw1m6AY=
 github.com/pefish/go-shell v0.0.6/go.mod h1:tIVv6ZNAuEVvQtFyW5swKS2auv8fClMPwDKP3ELQacE=
+github.com/pefish/go-shell v0.0.7 h1:+S6m/XVlh117482Yepp7FFMilyXBJIkMaRY+KgemTr4=
+github.com/pefish/go-shell v0.0.7/go.mod h1:tIVv6ZNAuEVvQtFyW5swKS2auv8fClMPwDKP3ELQacE=
 github.com/pefish/go-string v0.1.1 h1:/ahBixZFSUQ0+V9Hr1GI0HfEJO7Od3RSgFEaSAGfslo=
 github.com/pefish/go-string v0.1.1/go.mod h1:9lbzUcV4Gzxg3U3hbeOCjrjhz8guCP3BxaqqiswrBis=
 github.com/pefish/go-string v0.1.2 h1:l4c8082Fp+Niy+/yapax2p2Tnck9Y5D1Z9iBhUDoP4I=
