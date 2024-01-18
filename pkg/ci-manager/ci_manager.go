@@ -94,9 +94,9 @@ configPath="%s"
 
 git reset --hard && git pull && git checkout %s && git pull
 
-imageName="${projectName}:`+`git rev-parse --short HEAD`+`"
+imageName="${projectName}:$(git rev-parse --short HEAD)"
 
-if [[ "`+`sudo docker images -q ${imageName} 2> /dev/null`+`" == "" ]]; then
+if [[ "$(sudo docker images -q ${imageName} 2> /dev/null)" == "" ]]; then
   sudo docker build -t ${imageName} .
 fi
 
