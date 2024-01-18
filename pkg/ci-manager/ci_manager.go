@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pefish/ci-tool/pkg/constant"
 	go_best_type "github.com/pefish/go-best-type"
+	go_logger "github.com/pefish/go-logger"
 	go_shell "github.com/pefish/go-shell"
 	"os/exec"
 	"sync"
@@ -29,13 +30,14 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 		scriptPath := data["script_path"].(string)
 		projectName := data["project_name"].(string)
 		go func() {
-			fmt.Printf("<%s> 正在部署...", projectName)
+			logger := go_logger.Logger.CloneWithPrefix(projectName)
+			logger.InfoF("<%s> 正在部署...\n", projectName)
 			c.logs.Delete(projectName)
-			err := c.startCi(srcPath, scriptPath, projectName)
+			err := c.startCi(logger, srcPath, scriptPath, projectName)
 			if err != nil {
 				c.logs.Store(projectName, err.Error())
 			}
-			fmt.Printf("<%s> 部署成功", projectName)
+			logger.InfoF("<%s> 部署成功\n", projectName)
 		}()
 	case constant.ActionType_LOG:
 		msg := data["msg"].(string)
@@ -57,7 +59,7 @@ func (c *CiManagerType) OnExited() {
 
 }
 
-func (c *CiManagerType) startCi(srcPath, scriptPath, projectName string) error {
+func (c *CiManagerType) startCi(logger go_logger.InterfaceLogger, srcPath, scriptPath, projectName string) error {
 	script := fmt.Sprintf(
 		`
 #!/bin/bash
@@ -76,7 +78,7 @@ git checkout test && git pull
 		for {
 			select {
 			case r := <-resultChan:
-				fmt.Println(r)
+				logger.Info(r)
 				d, ok := c.logs.Load(projectName)
 				if !ok {
 					c.logs.Store(projectName, r)
