@@ -5,38 +5,88 @@ import (
 	"fmt"
 	"github.com/pefish/ci-tool/pkg/constant"
 	go_best_type "github.com/pefish/go-best-type"
+	go_shell "github.com/pefish/go-shell"
+	"os/exec"
+	"sync"
 )
 
 type CiManagerType struct {
 	go_best_type.BaseBestType
-	logs map[string]string
+	logs sync.Map // map[string]string
 }
 
 func NewCiManager(ctx context.Context) *CiManagerType {
 	return &CiManagerType{
 		BaseBestType: *go_best_type.NewBaseBestType(ctx, 0),
-		logs:         make(map[string]string),
 	}
 }
 
-func (c CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_best_type.IBestType) {
+func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_best_type.IBestType) {
 	data := ask.Data.(map[string]interface{})
 	switch ask.Action {
 	case constant.ActionType_CI:
 		srcPath := data["src_path"].(string)
 		scriptPath := data["script_path"].(string)
 		projectName := data["project_name"].(string)
-		c.logs[projectName] = fmt.Sprintf("CI 请求收到。srcPath: %s, scriptPath: %s, projectName: %s", srcPath, scriptPath, projectName)
+		go func() {
+			c.logs.Delete(projectName)
+			err := c.startCi(srcPath, scriptPath, projectName)
+			if err != nil {
+				c.logs.Store(projectName, err.Error())
+			}
+		}()
 	case constant.ActionType_LOG:
 		msg := data["msg"].(string)
 		projectName := data["project_name"].(string)
-		c.logs[projectName] = msg
+		c.logs.Store(projectName, msg)
 	case constant.ActionType_ReadLog:
 		projectName := data["project_name"].(string)
-		ask.AnswerChan <- c.logs[projectName]
+		d, ok := c.logs.Load(projectName)
+		if !ok {
+			ask.AnswerChan <- ""
+		} else {
+			ask.AnswerChan <- d.(string)
+		}
+
 	}
 }
 
-func (c CiManagerType) OnExited() {
+func (c *CiManagerType) OnExited() {
 
+}
+
+func (c *CiManagerType) startCi(srcPath, scriptPath, projectName string) error {
+	script := fmt.Sprintf(
+		`
+#!/bin/bash
+set -euxo pipefail
+cd %s
+git checkout test && git pull
+%s
+`,
+		srcPath,
+		scriptPath,
+	)
+	cmd := exec.Command("/bin/bash", "-c", script)
+
+	resultChan := make(chan string)
+	go func() {
+		for {
+			select {
+			case r := <-resultChan:
+				d, ok := c.logs.Load(projectName)
+				if !ok {
+					c.logs.Store(projectName, r)
+				} else {
+					c.logs.Store(projectName, d.(string)+r+"\n")
+				}
+			}
+		}
+	}()
+	err := go_shell.ExecResultLineByLine(cmd, resultChan)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
