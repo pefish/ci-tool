@@ -33,9 +33,9 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 		configPath := data["config_path"].(string)
 		go func() {
 			logger := go_logger.Logger.CloneWithPrefix(projectName)
-			logger.InfoF("<%s> 正在部署...\n", projectName)
+			logger.InfoF("<%s> running...\n", projectName)
 			c.logs.Delete(projectName)
-			c.logs.Store(projectName, "正在部署...\n")
+			c.logs.Store(projectName, "running...\n")
 			err := c.startCi(
 				logger,
 				env,
@@ -47,8 +47,8 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 			if err != nil {
 				c.logs.Store(projectName, err.Error())
 			}
-			logger.InfoF("<%s> 部署成功\n", projectName)
-			c.logs.Store(projectName, "部署成功\n")
+			logger.InfoF("<%s> done!!!\n", projectName)
+			c.logs.Store(projectName, "done!!!\n")
 		}()
 	case constant.ActionType_LOG:
 		msg := data["msg"].(string)
