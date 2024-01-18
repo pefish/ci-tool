@@ -79,5 +79,7 @@ func (c *CiControllerType) CiLog(apiSession _type.IApiSession) (interface{}, *go
 	})
 	answer := <-answerChan
 
-	return answer.(string), nil
+	apiSession.WriteText(answer.(string))
+
+	return nil, nil
 }
