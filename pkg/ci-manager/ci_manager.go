@@ -28,7 +28,6 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 	case constant.ActionType_CI:
 		env := data["env"].(string)
 		srcPath := data["src_path"].(string)
-		scriptPath := data["script_path"].(string)
 		projectName := data["project_name"].(string)
 		port := data["port"].(uint64)
 		configPath := data["config_path"].(string)
@@ -41,7 +40,6 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 				logger,
 				env,
 				srcPath,
-				scriptPath,
 				projectName,
 				port,
 				configPath,
@@ -76,7 +74,6 @@ func (c *CiManagerType) startCi(
 	logger go_logger.InterfaceLogger,
 	env,
 	srcPath,
-	scriptPath,
 	projectName string,
 	port uint64,
 	configPath string,
@@ -111,7 +108,7 @@ sudo docker run --name ${containerName} -d -v ${configPath}:/app/config%s ${imag
 
 `,
 		srcPath,
-		scriptPath,
+		projectName,
 		port,
 		configPath,
 		branch,
