@@ -38,6 +38,8 @@ github.com/pefish/go-best-type v0.0.5 h1:0RnEFlw9LokxAx5wZ6+STQ4VzVtZIzgCyaZFbD9
 github.com/pefish/go-best-type v0.0.5/go.mod h1:e4mlVMb4J3MqZJ4V0sH8aKjI5DpsaKiSbRCkZkGuV6A=
 github.com/pefish/go-best-type v0.0.6 h1:klpDp91NBgv2Hxzg1bp9nzW4nFcOAZMdr/ymoCtG0OI=
 github.com/pefish/go-best-type v0.0.6/go.mod h1:e4mlVMb4J3MqZJ4V0sH8aKjI5DpsaKiSbRCkZkGuV6A=
+github.com/pefish/go-best-type v0.0.7 h1:vEMcCIrHLYtRkcQBA/bMzWyCBo1bsc2xsJC3CE4aN6k=
+github.com/pefish/go-best-type v0.0.7/go.mod h1:e4mlVMb4J3MqZJ4V0sH8aKjI5DpsaKiSbRCkZkGuV6A=
 github.com/pefish/go-commander v0.5.2 h1:v+xrs02dzL/m9zDqnXQYi+Ki4P7gxyOsdmSYMv8Ytik=
 github.com/pefish/go-commander v0.5.2/go.mod h1:5rNWvxoTzeNKz0AreA8qIj1sz0YhXxJa7rm2Ph87mf4=
 github.com/pefish/go-config v0.2.5 h1:X3b9t+gPgH8uPNY7lK1siVg/95FO93X2QbrGkMpMm8Y=

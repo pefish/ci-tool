@@ -1,15 +1,15 @@
-# XXX
+# ci-tool
 
 [![view examples](https://img.shields.io/badge/learn%20by-examples-0C8EC5.svg?style=for-the-badge&logo=go)](https://github.com/pefish/XXX)
 
 Read this in other languages: [English](README.md), [简体中文](README_zh-cn.md)
 
-XXX
+ci-tool
 
 ## 安装
 
 ```
-go install github.com/pefish/XXX/cmd/XXX@latest
+go install github.com/pefish/ci-tool/cmd/ci-tool@latest
 ```
 
 ## 快速开始

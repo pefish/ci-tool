@@ -26,6 +26,7 @@ func NewDefaultCommand() *DefaultCommand {
 
 func (dc *DefaultCommand) DecorateFlagSet(flagSet *flag.FlagSet) error {
 	flagSet.String("server-host", "127.0.0.1", "The host of web server.")
+	flagSet.String("token", "", "The token of request.")
 	flagSet.Int("server-port", 8000, "The port of web server.")
 	return nil
 }

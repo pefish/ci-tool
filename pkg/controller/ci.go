@@ -15,9 +15,10 @@ type CiControllerType struct {
 var CiController = CiControllerType{}
 
 type CiStartParams struct {
-	SrcPath    string `json:"src_path" validate:"required"`
-	ScriptPath string `json:"script_path" validate:"required"`
-	Token      string `json:"token" validate:"required"`
+	ProjectName string `json:"project_name" validate:"required"`
+	SrcPath     string `json:"src_path" validate:"required"`
+	ScriptPath  string `json:"script_path" validate:"required"`
+	Token       string `json:"token" validate:"required"`
 }
 
 func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *go_error.ErrorInfo) {
@@ -28,13 +29,55 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 		return nil, go_error.INTERNAL_ERROR
 	}
 
+	if params.Token != global.GlobalConfig.Token {
+		global.CiManager.Ask(&go_best_type.AskType{
+			Action: constant.ActionType_LOG,
+			Data: map[string]interface{}{
+				"project_name": params.ProjectName,
+				"msg":          "Token error.",
+			},
+		})
+		return nil, go_error.WrapWithStr("Token error.")
+	}
+
 	global.CiManager.Ask(&go_best_type.AskType{
 		Action: constant.ActionType_CI,
 		Data: map[string]interface{}{
-			"src_path":    params.SrcPath,
-			"script_path": params.ScriptPath,
+			"project_name": params.ProjectName,
+			"src_path":     params.SrcPath,
+			"script_path":  params.ScriptPath,
 		},
 	})
 
 	return params, nil
+}
+
+type CiLogParams struct {
+	ProjectName string `json:"project_name" validate:"required"`
+	Token       string `json:"token" validate:"required"`
+}
+
+func (c *CiControllerType) CiLog(apiSession _type.IApiSession) (interface{}, *go_error.ErrorInfo) {
+	var params CiLogParams
+	err := apiSession.ScanParams(&params)
+	if err != nil {
+		go_logger.Logger.ErrorF("Read params error. %+v", err)
+		return nil, go_error.INTERNAL_ERROR
+	}
+
+	if params.Token != global.GlobalConfig.Token {
+		return nil, go_error.WrapWithStr("Token error.")
+	}
+
+	answerChan := make(chan interface{})
+	global.CiManager.Ask(&go_best_type.AskType{
+		Action: constant.ActionType_ReadLog,
+		Data: map[string]interface{}{
+			"project_name": params.ProjectName,
+		},
+		AnswerChan: answerChan,
+	})
+	answer := <-answerChan
+
+	return answer.(string), nil
 }

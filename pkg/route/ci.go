@@ -13,4 +13,10 @@ var CiRoute = []*api.Api{
 		Params:     controller.CiStartParams{},
 		Controller: controller.CiController.CiStart,
 	},
+	{
+		Path:       "/v1/ci-log",
+		Method:     gorequest.GET,
+		Params:     controller.CiLogParams{},
+		Controller: controller.CiController.CiLog,
+	},
 }

@@ -7,5 +7,7 @@ const (
 )
 
 const (
-	ActionType_CI go_best_type.ActionType = "ci"
+	ActionType_CI      go_best_type.ActionType = "ci"
+	ActionType_LOG     go_best_type.ActionType = "log"
+	ActionType_ReadLog go_best_type.ActionType = "read_log"
 )
