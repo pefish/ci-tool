@@ -8,6 +8,7 @@ import (
 	go_logger "github.com/pefish/go-logger"
 	go_shell "github.com/pefish/go-shell"
 	"os/exec"
+	"strings"
 	"sync"
 )
 
@@ -35,7 +36,6 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 			logger := go_logger.Logger.CloneWithPrefix(projectName)
 			logger.InfoF("<%s> running...\n", projectName)
 			c.logs.Delete(projectName)
-			c.logs.Store(projectName, "running...\n")
 			err := c.startCi(
 				logger,
 				env,
@@ -48,7 +48,6 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 				c.logs.Store(projectName, err.Error())
 			}
 			logger.InfoF("<%s> done!!!\n", projectName)
-			c.logs.Store(projectName, "done!!!\n")
 		}()
 	case constant.ActionType_LOG:
 		msg := data["msg"].(string)
@@ -82,6 +81,15 @@ func (c *CiManagerType) startCi(
 	if env == "prod" {
 		branch = "main"
 	}
+
+	if strings.HasPrefix(srcPath, "~") {
+		srcPath = "${HOME}" + srcPath[1:]
+	}
+
+	if strings.HasPrefix(configPath, "~") {
+		configPath = "${HOME}" + configPath[1:]
+	}
+
 	script := fmt.Sprintf(
 		`
 #!/bin/bash
