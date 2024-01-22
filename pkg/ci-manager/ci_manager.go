@@ -7,6 +7,7 @@ import (
 	go_best_type "github.com/pefish/go-best-type"
 	go_logger "github.com/pefish/go-logger"
 	go_shell "github.com/pefish/go-shell"
+	"github.com/pkg/errors"
 	"os/exec"
 	"strings"
 	"sync"
@@ -77,6 +78,10 @@ func (c *CiManagerType) startCi(
 	port uint64,
 	configPath string,
 ) error {
+	if env != "test" && env != "prod" {
+		return errors.New("Env is illegal.")
+	}
+
 	branch := "test"
 	if env == "prod" {
 		branch = "main"
