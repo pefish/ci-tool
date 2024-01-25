@@ -58,7 +58,7 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 						SetLogger(go_logger.Logger).
 						SendMsg(tg_sender.MsgStruct{
 							ChatId: alertTgGroupId,
-							Msg:    fmt.Sprintf("[ERROR] <%s> 发布失败。%+v", projectName, err),
+							Msg:    fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。%+v", projectName, env, err),
 							Ats:    nil,
 						}, 0)
 				}
@@ -70,7 +70,7 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 					SetLogger(go_logger.Logger).
 					SendMsg(tg_sender.MsgStruct{
 						ChatId: alertTgGroupId,
-						Msg:    fmt.Sprintf("[INFO] <%s> 发布成功。", projectName),
+						Msg:    fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", projectName, env),
 						Ats:    nil,
 					}, 0)
 			}
