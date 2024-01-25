@@ -21,6 +21,7 @@ type CiStartParams struct {
 	Token          string `json:"token" validate:"required"`
 	Port           uint64 `json:"port"`
 	ConfigPath     string `json:"config_path" validate:"required"`
+	AlertTgToken   string `json:"alert_tg_token"`
 	AlertTgGroupId string `json:"alert_tg_group_id"`
 	LokiUrl        string `json:"loki_url"`
 }
@@ -52,6 +53,7 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 			"src_path":          params.SrcPath,
 			"port":              params.Port,
 			"config_path":       params.ConfigPath,
+			"alert_tg_token":    params.AlertTgToken,
 			"alert_tg_group_id": params.AlertTgGroupId,
 			"loki_url":          params.LokiUrl,
 		},

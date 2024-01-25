@@ -6,7 +6,6 @@ type Config struct {
 	ServerHost string `json:"server-host"`
 	Token      string `json:"token"`
 	ServerPort uint64 `json:"server-port"`
-	AlertToken string `json:"alert-token"`
 }
 
 var GlobalConfig Config

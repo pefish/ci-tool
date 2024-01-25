@@ -16,16 +16,12 @@ import (
 
 type CiManagerType struct {
 	go_best_type.BaseBestType
-	logs     sync.Map // map[string]string
-	tgSender *tg_sender.TgSender
+	logs sync.Map // map[string]string
 }
 
-func NewCiManager(ctx context.Context, alertToken string) *CiManagerType {
+func NewCiManager(ctx context.Context) *CiManagerType {
 	c := &CiManagerType{
 		BaseBestType: *go_best_type.NewBaseBestType(ctx, 0),
-	}
-	if alertToken != "" {
-		c.tgSender = tg_sender.NewTgSender(alertToken).SetLogger(go_logger.Logger)
 	}
 	return c
 }
@@ -39,6 +35,7 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 		projectName := data["project_name"].(string)
 		port := data["port"].(uint64)
 		configPath := data["config_path"].(string)
+		alertTgToken := data["alert_tg_token"].(string)
 		alertTgGroupId := data["alert_tg_group_id"].(string)
 		lokiUrl := data["loki_url"].(string)
 		go func() {
@@ -56,23 +53,26 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 			)
 			if err != nil {
 				c.logs.Store(projectName, err.Error())
-				if c.tgSender != nil && alertTgGroupId != "" {
-					c.tgSender.SendMsg(tg_sender.MsgStruct{
-						ChatId: alertTgGroupId,
-						Msg:    fmt.Sprintf("[ERROR] <%s> 发布失败。%+v", projectName, err),
-						Ats:    nil,
-					}, 0)
+				if alertTgGroupId != "" {
+					tg_sender.NewTgSender(alertTgToken).
+						SetLogger(go_logger.Logger).
+						SendMsg(tg_sender.MsgStruct{
+							ChatId: alertTgGroupId,
+							Msg:    fmt.Sprintf("[ERROR] <%s> 发布失败。%+v", projectName, err),
+							Ats:    nil,
+						}, 0)
 				}
 				return
 			}
 
-			if c.tgSender != nil && alertTgGroupId != "" {
-				// 发送通知
-				c.tgSender.SendMsg(tg_sender.MsgStruct{
-					ChatId: alertTgGroupId,
-					Msg:    fmt.Sprintf("[INFO] <%s> 发布成功。", projectName),
-					Ats:    nil,
-				}, 0)
+			if alertTgGroupId != "" {
+				tg_sender.NewTgSender(alertTgToken).
+					SetLogger(go_logger.Logger).
+					SendMsg(tg_sender.MsgStruct{
+						ChatId: alertTgGroupId,
+						Msg:    fmt.Sprintf("[INFO] <%s> 发布成功。", projectName),
+						Ats:    nil,
+					}, 0)
 			}
 
 			logger.InfoF("<%s> done!!!\n", projectName)

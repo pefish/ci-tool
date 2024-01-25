@@ -28,7 +28,6 @@ func (dc *DefaultCommand) DecorateFlagSet(flagSet *flag.FlagSet) error {
 	flagSet.String("server-host", "127.0.0.1", "The host of web server.")
 	flagSet.String("token", "", "The token of request.")
 	flagSet.Int("server-port", 8000, "The port of web server.")
-	flagSet.String("alert-token", "", "The alert token of tg bot.")
 	return nil
 }
 
@@ -45,7 +44,7 @@ func (dc *DefaultCommand) Init(data *commander.StartData) error {
 		return err
 	}
 
-	global.CiManager = ci_manager.NewCiManager(data.ExitCancelCtx, global.GlobalConfig.AlertToken)
+	global.CiManager = ci_manager.NewCiManager(data.ExitCancelCtx)
 	go func() {
 		global.CiManager.Listen(global.CiManager, nil)
 	}()
