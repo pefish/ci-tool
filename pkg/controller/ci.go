@@ -15,12 +15,14 @@ type CiControllerType struct {
 var CiController = CiControllerType{}
 
 type CiStartParams struct {
-	Env         string `json:"env" validate:"required"`
-	ProjectName string `json:"project_name" validate:"required"`
-	SrcPath     string `json:"src_path" validate:"required"`
-	Token       string `json:"token" validate:"required"`
-	Port        uint64 `json:"port"`
-	ConfigPath  string `json:"config_path" validate:"required"`
+	Env            string `json:"env" validate:"required"`
+	ProjectName    string `json:"project_name" validate:"required"`
+	SrcPath        string `json:"src_path" validate:"required"`
+	Token          string `json:"token" validate:"required"`
+	Port           uint64 `json:"port"`
+	ConfigPath     string `json:"config_path" validate:"required"`
+	AlertTgGroupId string `json:"alert_tg_group_id"`
+	LokiUrl        string `json:"loki_url"`
 }
 
 func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *go_error.ErrorInfo) {
@@ -45,11 +47,13 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 	global.CiManager.Ask(&go_best_type.AskType{
 		Action: constant.ActionType_CI,
 		Data: map[string]interface{}{
-			"env":          params.Env,
-			"project_name": params.ProjectName,
-			"src_path":     params.SrcPath,
-			"port":         params.Port,
-			"config_path":  params.ConfigPath,
+			"env":               params.Env,
+			"project_name":      params.ProjectName,
+			"src_path":          params.SrcPath,
+			"port":              params.Port,
+			"config_path":       params.ConfigPath,
+			"alert_tg_group_id": params.AlertTgGroupId,
+			"loki_url":          params.LokiUrl,
 		},
 	})
 

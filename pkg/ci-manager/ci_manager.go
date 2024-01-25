@@ -7,6 +7,7 @@ import (
 	go_best_type "github.com/pefish/go-best-type"
 	go_logger "github.com/pefish/go-logger"
 	go_shell "github.com/pefish/go-shell"
+	tg_sender "github.com/pefish/tg-sender"
 	"github.com/pkg/errors"
 	"os/exec"
 	"strings"
@@ -15,13 +16,18 @@ import (
 
 type CiManagerType struct {
 	go_best_type.BaseBestType
-	logs sync.Map // map[string]string
+	logs     sync.Map // map[string]string
+	tgSender *tg_sender.TgSender
 }
 
-func NewCiManager(ctx context.Context) *CiManagerType {
-	return &CiManagerType{
+func NewCiManager(ctx context.Context, alertToken string) *CiManagerType {
+	c := &CiManagerType{
 		BaseBestType: *go_best_type.NewBaseBestType(ctx, 0),
 	}
+	if alertToken != "" {
+		c.tgSender = tg_sender.NewTgSender(alertToken).SetLogger(go_logger.Logger)
+	}
+	return c
 }
 
 func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_best_type.IBestType) {
@@ -33,6 +39,8 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 		projectName := data["project_name"].(string)
 		port := data["port"].(uint64)
 		configPath := data["config_path"].(string)
+		alertTgGroupId := data["alert_tg_group_id"].(string)
+		lokiUrl := data["loki_url"].(string)
 		go func() {
 			logger := go_logger.Logger.CloneWithPrefix(projectName)
 			logger.InfoF("<%s> running...\n", projectName)
@@ -44,10 +52,29 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 				projectName,
 				port,
 				configPath,
+				lokiUrl,
 			)
 			if err != nil {
 				c.logs.Store(projectName, err.Error())
+				if c.tgSender != nil && alertTgGroupId != "" {
+					c.tgSender.SendMsg(tg_sender.MsgStruct{
+						ChatId: alertTgGroupId,
+						Msg:    fmt.Sprintf("[ERROR] <%s> 发布失败。%+v", projectName, err),
+						Ats:    nil,
+					}, 0)
+				}
+				return
 			}
+
+			if c.tgSender != nil && alertTgGroupId != "" {
+				// 发送通知
+				c.tgSender.SendMsg(tg_sender.MsgStruct{
+					ChatId: alertTgGroupId,
+					Msg:    fmt.Sprintf("[INFO] <%s> 发布成功。", projectName),
+					Ats:    nil,
+				}, 0)
+			}
+
 			logger.InfoF("<%s> done!!!\n", projectName)
 		}()
 	case constant.ActionType_LOG:
@@ -77,6 +104,7 @@ func (c *CiManagerType) startCi(
 	projectName string,
 	port uint64,
 	configPath string,
+	lokiUrl string,
 ) error {
 	if env != "test" && env != "prod" {
 		return errors.New("Env is illegal.")
@@ -117,7 +145,7 @@ containerName="${projectName}-%s"
 
 sudo docker stop ${containerName} && sudo docker rm ${containerName}
 
-sudo docker run --name ${containerName} -d -v ${configPath}:/app/config%s ${imageName}
+sudo docker run --name ${containerName} -d -v ${configPath}:/app/config%s%s ${imageName}
 
 `,
 		srcPath,
@@ -131,6 +159,13 @@ sudo docker run --name ${containerName} -d -v ${configPath}:/app/config%s ${imag
 				return ""
 			} else {
 				return " -p ${port}:${port}"
+			}
+		}(),
+		func() string {
+			if lokiUrl == "" {
+				return ""
+			} else {
+				return fmt.Sprintf(` --log-driver=loki --log-opt loki-url="%s" --log-opt loki-retries=5 --log-opt loki-batch-size=400`, lokiUrl)
 			}
 		}(),
 	)
