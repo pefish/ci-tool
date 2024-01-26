@@ -6,7 +6,7 @@ toolchain go1.21.5
 
 require (
 	github.com/pefish/go-best-type v0.0.7
-	github.com/pefish/go-commander v0.6.1
+	github.com/pefish/go-commander v0.6.2
 	github.com/pefish/go-config v0.4.0
 	github.com/pefish/go-core v1.4.0
 	github.com/pefish/go-core-type v0.1.0
