@@ -127,11 +127,13 @@ func (c *CiManagerType) startCi(
 		`
 #!/bin/bash
 set -euxo pipefail
-cd %s
 
+src="%s"
 projectName="%s"
 port="%d"
 configPath="%s"
+
+cd ${src}
 
 git reset --hard && git pull && git checkout %s && git pull
 
