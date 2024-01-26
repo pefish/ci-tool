@@ -56,6 +56,8 @@ github.com/pefish/go-logger v0.5.5 h1:GqOUXQdVrafMhBy0Hlq7A9Oqp65GppSSsnw8zyDEIE
 github.com/pefish/go-logger v0.5.5/go.mod h1:IN1qdbxaVfsT518o9lsj8YY0bCi6E8kakuiVzG6pICA=
 github.com/pefish/go-shell v0.0.8 h1:fDSv5esmjDnMRBFFayNtl2XiLNbKY2TV+pBLB/ExtIM=
 github.com/pefish/go-shell v0.0.8/go.mod h1:bsdtTFbQbHxTp8IlvIjDY8Eb5WUKDNQjuLEzidwHzv0=
+github.com/pefish/go-shell v0.0.9 h1:ERkc7cIMiYxhsk+pqHrJluQQIuBrJbuzV4KRRA5My7w=
+github.com/pefish/go-shell v0.0.9/go.mod h1:bsdtTFbQbHxTp8IlvIjDY8Eb5WUKDNQjuLEzidwHzv0=
 github.com/pefish/go-string v0.1.2 h1:l4c8082Fp+Niy+/yapax2p2Tnck9Y5D1Z9iBhUDoP4I=
 github.com/pefish/go-string v0.1.2/go.mod h1:ZMKPtawOqjSiE40Rm2zg1mAMwFqSh0ENORRDJLKa2Nk=
 github.com/pefish/go-task-driver v0.2.3 h1:h88ZO4v5cBndZdaxDucB9yJJM0vdDf9vAQ6lA/6ciU8=
