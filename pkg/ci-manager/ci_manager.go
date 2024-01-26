@@ -134,6 +134,11 @@ projectName="%s"
 port="%d"
 configPath="%s"
 
+if [[ ! -d "${configPath}" ]]; then
+  echo "Config not be found!" 1>&2
+  exit 1
+fi
+
 cd ${src}
 
 git reset --hard && git pull && git checkout %s && git pull
