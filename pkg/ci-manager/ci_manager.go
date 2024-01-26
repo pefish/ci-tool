@@ -188,7 +188,7 @@ sudo docker run --name ${containerName} -d -v ${configPath}:/app/config%s%s ${im
 			}
 		}
 	}()
-	err := go_shell.ExecResultLineByLine(cmd, resultChan)
+	err := go_shell.ExecForResultLineByLine(cmd, resultChan)
 	if err != nil {
 		return err
 	}

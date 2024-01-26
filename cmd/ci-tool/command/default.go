@@ -31,11 +31,11 @@ func (dc *DefaultCommand) DecorateFlagSet(flagSet *flag.FlagSet) error {
 	return nil
 }
 
-func (dc *DefaultCommand) OnExited(data *commander.StartData) error {
+func (dc *DefaultCommand) OnExited(command *commander.Commander) error {
 	return nil
 }
 
-func (dc *DefaultCommand) Init(data *commander.StartData) error {
+func (dc *DefaultCommand) Init(command *commander.Commander) error {
 	service.Service.SetName(version.AppName)
 	logger.LoggerDriverInstance.Register(go_logger.Logger)
 
@@ -44,7 +44,7 @@ func (dc *DefaultCommand) Init(data *commander.StartData) error {
 		return err
 	}
 
-	global.CiManager = ci_manager.NewCiManager(data.ExitCancelCtx)
+	global.CiManager = ci_manager.NewCiManager(command.Ctx)
 	go func() {
 		global.CiManager.Listen(global.CiManager, nil)
 	}()
@@ -60,12 +60,12 @@ func (dc *DefaultCommand) Init(data *commander.StartData) error {
 	return nil
 }
 
-func (dc *DefaultCommand) Start(data *commander.StartData) error {
+func (dc *DefaultCommand) Start(command *commander.Commander) error {
 
 	taskDriver := task_driver.NewTaskDriver()
 	taskDriver.Register(service.Service)
 
-	taskDriver.RunWait(data.ExitCancelCtx)
+	taskDriver.RunWait(command.Ctx)
 
 	return nil
 }
