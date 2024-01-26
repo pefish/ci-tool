@@ -13,7 +13,7 @@ require (
 	github.com/pefish/go-error v1.0.8
 	github.com/pefish/go-http v0.6.5
 	github.com/pefish/go-logger v0.5.5
-	github.com/pefish/go-shell v0.0.9
+	github.com/pefish/go-shell v0.1.0
 	github.com/pefish/go-task-driver v0.2.3
 	github.com/pefish/tg-sender v0.0.2
 	github.com/pkg/errors v0.9.1
