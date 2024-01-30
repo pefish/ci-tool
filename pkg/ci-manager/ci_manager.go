@@ -10,6 +10,7 @@ import (
 	go_shell "github.com/pefish/go-shell"
 	tg_sender "github.com/pefish/tg-sender"
 	"github.com/pkg/errors"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -122,7 +123,11 @@ func (c *CiManagerType) startCi(
 	}
 
 	if strings.HasPrefix(configPath, "~") {
-		configPath = "${HOME}" + configPath[1:]
+		homePath, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+		configPath = homePath + configPath[1:]
 	}
 
 	if configPath != "" {
