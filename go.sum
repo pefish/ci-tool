@@ -46,6 +46,8 @@ github.com/pefish/go-desensitize v0.0.6 h1:GRgZ+dUMByZYJ1OYO1a6czXpzYJEhHQBl1mbC
 github.com/pefish/go-desensitize v0.0.6/go.mod h1:uXY6qOL5bhJVNZALEUaWiIZ1uGe6d7u0pKsKBdBHHEg=
 github.com/pefish/go-error v1.0.8 h1:IC1UCHkeFvtTpvDfVxBNEoA4yQNk4VKV+mhO3JW5Nxk=
 github.com/pefish/go-error v1.0.8/go.mod h1:CGliu23YIh+xakY+vs6xWLoaXOMAq+2qT87dVN3ZlzM=
+github.com/pefish/go-file v0.2.3 h1:glBhRD2Gn2YZB6Krw3I8rlkcDhf/BlSDA6PN8FIU0sc=
+github.com/pefish/go-file v0.2.3/go.mod h1:SsTQNSzKWUrpHJVZD1wyOjRAiXx4cIUgjSYMTHD1zxI=
 github.com/pefish/go-format v0.3.0 h1:iRDF1ffCF01AofMkFan+VWI5HKeHf2DBHnT1LO49k0c=
 github.com/pefish/go-format v0.3.0/go.mod h1:rI2ykz+2t8VattiNtK1yxm0KwsBOJTyPOMwSFblW62A=
 github.com/pefish/go-http v0.6.5 h1:OThBYhK+nYzBMg5HW/3oEujo3n32Q3vGcmOrO33VR1w=

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pefish/ci-tool/pkg/constant"
 	go_best_type "github.com/pefish/go-best-type"
+	go_file "github.com/pefish/go-file"
 	go_logger "github.com/pefish/go-logger"
 	go_shell "github.com/pefish/go-shell"
 	tg_sender "github.com/pefish/tg-sender"
@@ -120,6 +121,13 @@ func (c *CiManagerType) startCi(
 		srcPath = "${HOME}" + srcPath[1:]
 	}
 
+	if configPath != "" {
+		// 校验 config 文件夹是否存在
+		if !go_file.FileInstance.Exists(configPath) {
+			return errors.New("Config not be found!")
+		}
+	}
+
 	if strings.HasPrefix(configPath, "~") {
 		configPath = "${HOME}" + configPath[1:]
 	}
@@ -131,16 +139,9 @@ set -euxo pipefail
 
 src="%s"
 projectName="%s"
-port="%d"
-configPath="%s"
 
-if [[ ! -d "${configPath}" ]]; then
-  echo "Config not be found!" 1>&2
-  exit 1
-fi
 
 cd ${src}
-
 git reset --hard && git pull && git checkout %s && git pull
 
 imageName="${projectName}:$(git rev-parse --short HEAD)"
@@ -153,20 +154,25 @@ containerName="${projectName}-%s"
 
 sudo docker stop ${containerName} && sudo docker rm ${containerName}
 
-sudo docker run --name ${containerName} -d -v ${configPath}:/app/config%s%s ${imageName}
+sudo docker run --name ${containerName} -d %s%s%s ${imageName}
 
 `,
 		srcPath,
 		projectName,
-		port,
-		configPath,
 		branch,
 		env,
+		func() string {
+			if configPath == "" {
+				return ""
+			} else {
+				return fmt.Sprintf(" -v %s:/app/config", configPath)
+			}
+		}(),
 		func() string {
 			if port == 0 {
 				return ""
 			} else {
-				return " -p ${port}:${port}"
+				return fmt.Sprintf(" -p %d:8000", port)
 			}
 		}(),
 		func() string {

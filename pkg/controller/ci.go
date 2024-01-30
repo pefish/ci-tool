@@ -20,7 +20,7 @@ type CiStartParams struct {
 	SrcPath        string `json:"src_path" validate:"required"`
 	Token          string `json:"token" validate:"required"`
 	Port           uint64 `json:"port"`
-	ConfigPath     string `json:"config_path" validate:"required"`
+	ConfigPath     string `json:"config_path"`
 	AlertTgToken   string `json:"alert_tg_token"`
 	AlertTgGroupId string `json:"alert_tg_group_id"`
 	LokiUrl        string `json:"loki_url"`

@@ -30,6 +30,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pefish/go-decimal v0.4.0 // indirect
 	github.com/pefish/go-desensitize v0.0.6 // indirect
+	github.com/pefish/go-file v0.2.3 // indirect
 	github.com/pefish/go-format v0.3.0 // indirect
 	github.com/pefish/go-json v0.1.7 // indirect
 	github.com/pefish/go-string v0.1.2 // indirect
