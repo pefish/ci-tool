@@ -124,7 +124,7 @@ func (c *CiManagerType) startCi(
 	if configPath != "" {
 		// 校验 config 文件夹是否存在
 		if !go_file.FileInstance.Exists(configPath) {
-			return errors.New("Config not be found!")
+			return errors.New(fmt.Sprintf("Config <%s> not be found!", configPath))
 		}
 	}
 
