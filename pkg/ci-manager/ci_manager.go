@@ -121,15 +121,15 @@ func (c *CiManagerType) startCi(
 		srcPath = "${HOME}" + srcPath[1:]
 	}
 
+	if strings.HasPrefix(configPath, "~") {
+		configPath = "${HOME}" + configPath[1:]
+	}
+
 	if configPath != "" {
 		// 校验 config 文件夹是否存在
 		if !go_file.FileInstance.Exists(configPath) {
 			return errors.New(fmt.Sprintf("Config <%s> not be found!", configPath))
 		}
-	}
-
-	if strings.HasPrefix(configPath, "~") {
-		configPath = "${HOME}" + configPath[1:]
 	}
 
 	script := fmt.Sprintf(
