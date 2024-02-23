@@ -2,7 +2,7 @@ package command
 
 import (
 	"flag"
-	"fmt"
+
 	ci_manager "github.com/pefish/ci-tool/pkg/ci-manager"
 	"github.com/pefish/ci-tool/pkg/constant"
 	"github.com/pefish/ci-tool/pkg/global"
@@ -44,11 +44,7 @@ func (dc *DefaultCommand) Init(command *commander.Commander) error {
 		return err
 	}
 
-	global.CiManager = ci_manager.NewCiManager(command.Ctx)
-	go func() {
-		global.CiManager.Listen(global.CiManager, nil)
-	}()
-	fmt.Println(global.GlobalConfig.ServerPort)
+	global.CiManager = ci_manager.NewCiManager(command.Ctx, nil)
 
 	service.Service.SetHost(global.GlobalConfig.ServerHost)
 	service.Service.SetPort(global.GlobalConfig.ServerPort)

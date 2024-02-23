@@ -3,6 +3,11 @@ package ci_manager
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+	"sync"
+
 	"github.com/pefish/ci-tool/pkg/constant"
 	go_best_type "github.com/pefish/go-best-type"
 	go_file "github.com/pefish/go-file"
@@ -10,10 +15,6 @@ import (
 	go_shell "github.com/pefish/go-shell"
 	tg_sender "github.com/pefish/tg-sender"
 	"github.com/pkg/errors"
-	"os"
-	"os/exec"
-	"strings"
-	"sync"
 )
 
 type CiManagerType struct {
@@ -21,14 +22,18 @@ type CiManagerType struct {
 	logs sync.Map // map[string]string
 }
 
-func NewCiManager(ctx context.Context) *CiManagerType {
-	c := &CiManagerType{
-		BaseBestType: *go_best_type.NewBaseBestType(ctx, 0),
-	}
+func NewCiManager(ctx context.Context, bts map[string]go_best_type.IBestType) *CiManagerType {
+	c := &CiManagerType{}
+	c.BaseBestType = *go_best_type.NewBaseBestType(
+		ctx,
+		c,
+		bts,
+		0,
+	)
 	return c
 }
 
-func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_best_type.IBestType) {
+func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType) {
 	data := ask.Data.(map[string]interface{})
 	switch ask.Action {
 	case constant.ActionType_CI:
@@ -98,6 +103,10 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType, bts map[string]go_
 
 func (c *CiManagerType) OnExited() {
 
+}
+
+func (c *CiManagerType) Name() string {
+	return "CiManager"
 }
 
 func (c *CiManagerType) startCi(

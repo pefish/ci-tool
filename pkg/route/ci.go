@@ -7,16 +7,16 @@ import (
 )
 
 var CiRoute = []*api.Api{
-	{
-		Path:       "/v1/ci-start",
-		Method:     gorequest.POST,
-		Params:     controller.CiStartParams{},
-		Controller: controller.CiController.CiStart,
-	},
-	{
-		Path:       "/v1/ci-log",
-		Method:     gorequest.GET,
-		Params:     controller.CiLogParams{},
-		Controller: controller.CiController.CiLog,
-	},
+	api.NewApi(&api.NewApiParamsType{
+		Path:           "/v1/ci-start",
+		Method:         gorequest.POST,
+		Params:         controller.CiStartParams{},
+		ControllerFunc: controller.CiController.CiStart,
+	}),
+	api.NewApi(&api.NewApiParamsType{
+		Path:           "/v1/ci-log",
+		Method:         gorequest.GET,
+		Params:         controller.CiLogParams{},
+		ControllerFunc: controller.CiController.CiLog,
+	}),
 }

@@ -79,15 +79,12 @@ func (c *CiControllerType) CiLog(apiSession _type.IApiSession) (interface{}, *go
 		return nil, go_error.WrapWithStr("Token error.")
 	}
 
-	answerChan := make(chan interface{})
-	global.CiManager.Ask(&go_best_type.AskType{
+	answer := global.CiManager.AskForAnswer(&go_best_type.AskType{
 		Action: constant.ActionType_ReadLog,
 		Data: map[string]interface{}{
 			"project_name": params.ProjectName,
 		},
-		AnswerChan: answerChan,
 	})
-	answer := <-answerChan
 
 	apiSession.WriteText(answer.(string))
 
