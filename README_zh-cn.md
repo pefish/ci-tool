@@ -45,3 +45,4 @@ GO_CONFIG=/path/to/config XXX
 ## 授权许可
 
 [Apache License](LICENSE).
+
