@@ -43,6 +43,7 @@ func (c *CiManagerType) ProcessOtherAsk(exitChan <-chan go_best_type.ExitType, a
 		alertTgToken := data["alert_tg_token"].(string)
 		alertTgGroupId := data["alert_tg_group_id"].(string)
 		lokiUrl := data["loki_url"].(string)
+		dockerNetwork := data["docker_network"].(string)
 		go func() {
 			logger := go_logger.Logger.CloneWithPrefix(projectName)
 			logger.InfoF("<%s> running...\n", projectName)
@@ -55,6 +56,7 @@ func (c *CiManagerType) ProcessOtherAsk(exitChan <-chan go_best_type.ExitType, a
 				port,
 				configPath,
 				lokiUrl,
+				dockerNetwork,
 			)
 			if err != nil {
 				c.logs.Store(projectName, err.Error())
@@ -117,6 +119,7 @@ func (c *CiManagerType) startCi(
 	port uint64,
 	configPath string,
 	lokiUrl string,
+	dockerNetwork string,
 ) error {
 	if env != "test" && env != "prod" {
 		return errors.New("Env is illegal.")
@@ -167,7 +170,7 @@ containerName="${projectName}-%s"
 
 sudo docker stop ${containerName} && sudo docker rm ${containerName}
 
-sudo docker run --name ${containerName} -d %s%s%s ${imageName}
+sudo docker run --name ${containerName} -d %s%s%s%s ${imageName}
 
 `,
 		srcPath,
@@ -193,6 +196,13 @@ sudo docker run --name ${containerName} -d %s%s%s ${imageName}
 				return ""
 			} else {
 				return fmt.Sprintf(` --log-driver=loki --log-opt loki-url="%s" --log-opt loki-retries=5 --log-opt loki-batch-size=400`, lokiUrl)
+			}
+		}(),
+		func() string {
+			if dockerNetwork == "" {
+				return ""
+			} else {
+				return fmt.Sprintf(` --network %s`, dockerNetwork)
 			}
 		}(),
 	)

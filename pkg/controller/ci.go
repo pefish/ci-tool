@@ -24,6 +24,7 @@ type CiStartParams struct {
 	AlertTgToken   string `json:"alert_tg_token"`
 	AlertTgGroupId string `json:"alert_tg_group_id"`
 	LokiUrl        string `json:"loki_url"`
+	DockerNetwork  string `json:"docker_network"`
 }
 
 func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *go_error.ErrorInfo) {
@@ -56,6 +57,7 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 			"alert_tg_token":    params.AlertTgToken,
 			"alert_tg_group_id": params.AlertTgGroupId,
 			"loki_url":          params.LokiUrl,
+			"docker_network":    params.DockerNetwork,
 		},
 	})
 
