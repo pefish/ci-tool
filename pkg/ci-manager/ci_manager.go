@@ -22,18 +22,16 @@ type CiManagerType struct {
 	logs sync.Map // map[string]string
 }
 
-func NewCiManager(ctx context.Context, bts map[string]go_best_type.IBestType) *CiManagerType {
+func NewCiManager(ctx context.Context, name string) *CiManagerType {
 	c := &CiManagerType{}
 	c.BaseBestType = *go_best_type.NewBaseBestType(
-		ctx,
 		c,
-		bts,
-		0,
+		name,
 	)
 	return c
 }
 
-func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType) {
+func (c *CiManagerType) ProcessOtherAsk(exitChan <-chan go_best_type.ExitType, ask *go_best_type.AskType) error {
 	data := ask.Data.(map[string]interface{})
 	switch ask.Action {
 	case constant.ActionType_CI:
@@ -99,14 +97,16 @@ func (c *CiManagerType) ProcessAsk(ask *go_best_type.AskType) {
 		}
 
 	}
+
+	select {
+	case <-exitChan:
+	}
+
+	return nil
 }
 
-func (c *CiManagerType) OnExited() {
-
-}
-
-func (c *CiManagerType) Name() string {
-	return "CiManager"
+func (c *CiManagerType) Start(exitChan <-chan go_best_type.ExitType, ask *go_best_type.AskType) error {
+	return nil
 }
 
 func (c *CiManagerType) startCi(

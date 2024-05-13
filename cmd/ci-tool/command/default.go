@@ -44,7 +44,7 @@ func (dc *DefaultCommand) Init(command *commander.Commander) error {
 		return err
 	}
 
-	global.CiManager = ci_manager.NewCiManager(command.Ctx, nil)
+	global.CiManager = ci_manager.NewCiManager(command.Ctx, "CiManager")
 
 	service.Service.SetHost(global.GlobalConfig.ServerHost)
 	service.Service.SetPort(global.GlobalConfig.ServerPort)
