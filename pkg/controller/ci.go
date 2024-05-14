@@ -61,7 +61,7 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 		},
 	})
 
-	return params, nil
+	return true, nil
 }
 
 type CiLogParams struct {
