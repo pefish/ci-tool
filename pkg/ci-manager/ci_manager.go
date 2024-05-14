@@ -163,7 +163,7 @@ git reset --hard && git pull && git checkout %s && git pull
 imageName="${projectName}:$(git rev-parse --short HEAD)"
 
 if [[ "$(sudo docker images -q ${imageName} 2> /dev/null)" == "" ]]; then
-  sudo docker build -t ${imageName} .
+  sudo docker build --build-arg="ENV=%s" -t ${imageName} .
 fi
 
 containerName="${projectName}-%s"
@@ -176,6 +176,7 @@ sudo docker run --name ${containerName} -d %s%s%s%s ${imageName}
 		srcPath,
 		projectName,
 		branch,
+		env,
 		env,
 		func() string {
 			if configPath == "" {
