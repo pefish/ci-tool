@@ -163,7 +163,7 @@ git reset --hard && git pull && git checkout %s && git pull
 imageName="${projectName}:$(git rev-parse --short HEAD)"
 
 if [[ "$(sudo docker images -q ${imageName} 2> /dev/null)" == "" ]]; then
-  sudo docker build --build-arg="ENV=%s" -t ${imageName} .
+  sudo docker build --build-arg APP_ENV=%s -t ${imageName} .
 fi
 
 containerName="${projectName}-%s"
