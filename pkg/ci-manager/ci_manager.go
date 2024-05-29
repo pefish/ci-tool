@@ -158,7 +158,7 @@ projectName="%s"
 
 
 cd ${src}
-git reset --hard && git pull && git checkout %s && git pull
+git reset --hard && git clean -d -f . && git pull && git checkout %s && git pull
 
 imageName="${projectName}:$(git rev-parse --short HEAD)"
 
