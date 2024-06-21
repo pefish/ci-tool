@@ -79,7 +79,7 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 				SetLogger(go_logger.Logger).
 				SendMsg(&tg_sender.MsgStruct{
 					ChatId: params.AlertTgGroupId,
-					Msg:    fmt.Sprintf("[ERROR] <%s> 被禁用。", projectName),
+					Msg:    fmt.Sprintf("[ERROR] <%s> CI 被禁用。", projectName),
 					Ats:    nil,
 				}, 0)
 		}
@@ -90,13 +90,19 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 	global.CiManager.Ask(&go_best_type.AskType{
 		Action: constant.ActionType_CI,
 		Data: map[string]interface{}{
-			"env":               params.Env,
-			"repo":              params.Repo,
-			"fetch_code_key":    params.FetchCodeKey,
-			"git_username":      username,
-			"project_name":      projectName,
-			"src_path":          path.Join(global.GlobalConfig.SrcDir, projectName),
-			"config":            project.Config,
+			"env":            params.Env,
+			"repo":           params.Repo,
+			"fetch_code_key": params.FetchCodeKey,
+			"git_username":   username,
+			"project_name":   projectName,
+			"src_path":       path.Join(global.GlobalConfig.SrcDir, projectName),
+			"config": func() string {
+				if project.Config == nil {
+					return ""
+				} else {
+					return *project.Config
+				}
+			}(),
 			"port":              params.Port,
 			"alert_tg_token":    params.AlertTgToken,
 			"alert_tg_group_id": params.AlertTgGroupId,
