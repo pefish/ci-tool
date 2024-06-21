@@ -3,14 +3,12 @@ package ci_manager
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"sync"
 
 	"github.com/pefish/ci-tool/pkg/constant"
 	go_best_type "github.com/pefish/go-best-type"
-	go_file "github.com/pefish/go-file"
 	go_logger "github.com/pefish/go-logger"
 	go_shell "github.com/pefish/go-shell"
 	tg_sender "github.com/pefish/tg-sender"
@@ -36,10 +34,13 @@ func (c *CiManagerType) ProcessOtherAsk(exitChan <-chan go_best_type.ExitType, a
 	switch ask.Action {
 	case constant.ActionType_CI:
 		env := data["env"].(string)
-		srcPath := data["src_path"].(string)
+		repo := data["repo"].(string)
+		fetchCodeKey := data["fetch_code_key"].(string)
+		gitUsername := data["git_username"].(string)
 		projectName := data["project_name"].(string)
+		srcPath := data["src_path"].(string)
+		config := data["config"].(string)
 		port := data["port"].(uint64)
-		configPath := data["config_path"].(string)
 		alertTgToken := data["alert_tg_token"].(string)
 		alertTgGroupId := data["alert_tg_group_id"].(string)
 		lokiUrl := data["loki_url"].(string)
@@ -51,10 +52,13 @@ func (c *CiManagerType) ProcessOtherAsk(exitChan <-chan go_best_type.ExitType, a
 			err := c.startCi(
 				logger,
 				env,
+				repo,
+				fetchCodeKey,
+				gitUsername,
 				srcPath,
+				config,
 				projectName,
 				port,
-				configPath,
 				lokiUrl,
 				dockerNetwork,
 			)
@@ -63,7 +67,7 @@ func (c *CiManagerType) ProcessOtherAsk(exitChan <-chan go_best_type.ExitType, a
 				if alertTgGroupId != "" {
 					tg_sender.NewTgSender(alertTgToken).
 						SetLogger(go_logger.Logger).
-						SendMsg(tg_sender.MsgStruct{
+						SendMsg(&tg_sender.MsgStruct{
 							ChatId: alertTgGroupId,
 							Msg:    fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。\n%+v", projectName, env, err),
 							Ats:    nil,
@@ -76,7 +80,7 @@ func (c *CiManagerType) ProcessOtherAsk(exitChan <-chan go_best_type.ExitType, a
 			if alertTgGroupId != "" {
 				tg_sender.NewTgSender(alertTgToken).
 					SetLogger(go_logger.Logger).
-					SendMsg(tg_sender.MsgStruct{
+					SendMsg(&tg_sender.MsgStruct{
 						ChatId: alertTgGroupId,
 						Msg:    fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", projectName, env),
 						Ats:    nil,
@@ -114,10 +118,13 @@ func (c *CiManagerType) Start(exitChan <-chan go_best_type.ExitType, ask *go_bes
 func (c *CiManagerType) startCi(
 	logger go_logger.InterfaceLogger,
 	env,
+	repo,
+	fetchCodeKey,
+	gitUsername,
 	srcPath,
+	config,
 	projectName string,
 	port uint64,
-	configPath string,
 	lokiUrl string,
 	dockerNetwork string,
 ) error {
@@ -134,57 +141,51 @@ func (c *CiManagerType) startCi(
 		srcPath = "${HOME}" + srcPath[1:]
 	}
 
-	if configPath != "" {
-		if strings.HasPrefix(configPath, "~") {
-			homePath, err := os.UserHomeDir()
-			if err != nil {
-				return err
-			}
-			configPath = homePath + configPath[1:]
-		}
-		// 校验 config 文件夹是否存在
-		if !go_file.FileInstance.Exists(configPath) {
-			return errors.New(fmt.Sprintf("Config <%s> not be found!", configPath))
-		}
-	}
-
 	script := fmt.Sprintf(
 		`
 #!/bin/bash
 set -euxo pipefail
 
-src="%s"
-projectName="%s"
+src="`+srcPath+`"
 
-
-cd ${src}
-git reset --hard && git clean -d -f . && git pull && git checkout %s && git pull
-
-imageName="${projectName}:$(git rev-parse --short HEAD)"
-
-if [[ "$(sudo docker images -q ${imageName} 2> /dev/null)" == "" ]]; then
-  sudo docker build --build-arg APP_ENV=%s -t ${imageName} .
+# 检查源代码目录是否存在
+if [ ! -d "$src" ]; then
+    echo "源代码目录 '$src' 不存在，正在克隆仓库..."
+    git clone --config core.sshCommand="ssh -i `+fetchCodeKey+`" "`+repo+`" "$src"
+    
+    if [ $? -eq 0 ]; then
+        echo "克隆成功！"
+    else
+        echo "克隆失败，请检查 Git 仓库 URL 和网络连接。"
+        exit 1
+    fi
 fi
 
-containerName="${projectName}-%s"
+cd ${src}
+git config core.sshCommand "ssh -i `+fetchCodeKey+`"
+git reset --hard && git clean -d -f . && git pull && git checkout `+branch+` && git pull
+
+imageName="`+gitUsername+`-`+projectName+`:$(git rev-parse --short HEAD)"
+
+if [[ "$(sudo docker images -q ${imageName} 2> /dev/null)" == "" ]]; then
+  sudo docker build --build-arg APP_ENV=`+env+` -t ${imageName} .
+fi
+
+containerName="`+gitUsername+`-`+projectName+`-`+env+`"
 
 sudo docker stop ${containerName} && sudo docker rm ${containerName}
 
-sudo docker run --name ${containerName} -d %s%s%s%s ${imageName}
+# 创建一个临时文件
+TEMP_FILE=$(mktemp)
+
+echo "`+config+`" > "$TEMP_FILE"
+
+sudo docker run --name ${containerName} --env-file "$TEMP_FILE" -d %s%s%s ${imageName}
+
+# 删除临时文件
+rm "$TEMP_FILE"
 
 `,
-		srcPath,
-		projectName,
-		branch,
-		env,
-		env,
-		func() string {
-			if configPath == "" {
-				return ""
-			} else {
-				return fmt.Sprintf(" -v %s:/app/config", configPath)
-			}
-		}(),
 		func() string {
 			if port == 0 {
 				return ""
