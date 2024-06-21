@@ -151,7 +151,7 @@ src="`+srcPath+`"
 # 检查源代码目录是否存在
 if [ ! -d "$src" ]; then
     echo "源代码目录 '$src' 不存在，正在克隆仓库..."
-    git clone --config core.sshCommand="ssh -i `+fetchCodeKey+`" "`+repo+`" "$src"
+    git clone%s "`+repo+`" "$src"
     
     if [ $? -eq 0 ]; then
         echo "克隆成功！"
@@ -186,6 +186,13 @@ sudo docker run --name ${containerName} --env-file "$TEMP_FILE" -d %s%s%s ${imag
 rm "$TEMP_FILE"
 
 `,
+		func() string {
+			if fetchCodeKey == "" {
+				return ""
+			} else {
+				return fmt.Sprintf(` --config core.sshCommand="ssh -i %s"`, fetchCodeKey)
+			}
+		}(),
 		func() string {
 			if port == 0 {
 				return ""
