@@ -95,7 +95,7 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 			"fetch_code_key": params.FetchCodeKey,
 			"git_username":   username,
 			"project_name":   projectName,
-			"src_path":       path.Join(global.GlobalConfig.SrcDir, projectName),
+			"src_path":       path.Join(global.GlobalConfig.SrcDir, username, projectName),
 			"config": func() string {
 				if project.Config == nil {
 					return ""
