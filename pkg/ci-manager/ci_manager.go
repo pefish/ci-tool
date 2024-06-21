@@ -165,13 +165,15 @@ cd ${src}
 git config core.sshCommand "ssh -i `+fetchCodeKey+`"
 git reset --hard && git clean -d -f . && git pull && git checkout `+branch+` && git pull
 
-imageName="`+gitUsername+`-`+projectName+`:$(git rev-parse --short HEAD)"
+dockerBaseName="`+strings.ToLower(fmt.Sprintf("%s-%s", gitUsername, projectName))+`"
+
+imageName="${dockerBaseName}:$(git rev-parse --short HEAD)"
 
 if [[ "$(sudo docker images -q ${imageName} 2> /dev/null)" == "" ]]; then
   sudo docker build --build-arg APP_ENV=`+env+` -t ${imageName} .
 fi
 
-containerName="`+gitUsername+`-`+projectName+`-`+env+`"
+containerName="${dockerBaseName}-`+env+`"
 
 sudo docker stop ${containerName} && sudo docker rm ${containerName}
 
