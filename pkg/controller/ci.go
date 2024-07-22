@@ -55,8 +55,9 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 	}
 	colonPos := strings.Index(params.Repo, ":")
 	slashPos := strings.Index(params.Repo, "/")
-	username := params.Repo[colonPos+1 : slashPos]
+	gitUsername := params.Repo[colonPos+1 : slashPos]
 	projectName := params.Repo[slashPos+1 : len(params.Repo)-4]
+	fullName := strings.ToLower(fmt.Sprintf("%s-%s", gitUsername, projectName))
 
 	// 检查数据库中是否有这个项目
 	var project db.Project
@@ -67,7 +68,7 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 			Select:    "*",
 			Where:     "status = 1 and name = ?",
 		},
-		projectName,
+		fullName,
 	)
 	if err != nil {
 		go_logger.Logger.Error(err)
@@ -79,7 +80,7 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 				SetLogger(go_logger.Logger).
 				SendMsg(&tg_sender.MsgStruct{
 					ChatId: params.AlertTgGroupId,
-					Msg:    fmt.Sprintf("[ERROR] <%s> CI 被禁用。", projectName),
+					Msg:    fmt.Sprintf("[ERROR] <%s> CI 被禁用。", fullName),
 					Ats:    nil,
 				}, 0)
 		}
@@ -93,9 +94,9 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 			"env":            params.Env,
 			"repo":           params.Repo,
 			"fetch_code_key": params.FetchCodeKey,
-			"git_username":   username,
-			"project_name":   projectName,
-			"src_path":       path.Join(global.GlobalConfig.SrcDir, username, projectName),
+			"git_username":   gitUsername,
+			"full_name":      fullName,
+			"src_path":       path.Join(global.GlobalConfig.SrcDir, gitUsername, projectName),
 			"config": func() string {
 				if project.Config == nil {
 					return ""
@@ -115,7 +116,7 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 }
 
 type CiLogParams struct {
-	ProjectName string `json:"project_name" validate:"required"`
+	FullName string `json:"name" validate:"required"`
 }
 
 func (c *CiControllerType) CiLog(apiSession _type.IApiSession) (interface{}, *go_error.ErrorInfo) {
@@ -129,7 +130,7 @@ func (c *CiControllerType) CiLog(apiSession _type.IApiSession) (interface{}, *go
 	answer := global.CiManager.AskForAnswer(&go_best_type.AskType{
 		Action: constant.ActionType_ReadLog,
 		Data: map[string]interface{}{
-			"project_name": params.ProjectName,
+			"full_name": params.FullName,
 		},
 	})
 

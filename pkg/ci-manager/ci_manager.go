@@ -37,7 +37,7 @@ func (c *CiManagerType) ProcessOtherAsk(exitChan <-chan go_best_type.ExitType, a
 		repo := data["repo"].(string)
 		fetchCodeKey := data["fetch_code_key"].(string)
 		gitUsername := data["git_username"].(string)
-		projectName := data["project_name"].(string)
+		fullName := data["full_name"].(string)
 		srcPath := data["src_path"].(string)
 		config := data["config"].(string)
 		port := data["port"].(uint64)
@@ -46,9 +46,9 @@ func (c *CiManagerType) ProcessOtherAsk(exitChan <-chan go_best_type.ExitType, a
 		lokiUrl := data["loki_url"].(string)
 		dockerNetwork := data["docker_network"].(string)
 		go func() {
-			logger := go_logger.Logger.CloneWithPrefix(projectName)
-			logger.InfoF("<%s> running...\n", projectName)
-			c.logs.Delete(projectName)
+			logger := go_logger.Logger.CloneWithPrefix(fullName)
+			logger.InfoF("<%s> running...\n", fullName)
+			c.logs.Delete(fullName)
 			err := c.startCi(
 				logger,
 				env,
@@ -57,23 +57,23 @@ func (c *CiManagerType) ProcessOtherAsk(exitChan <-chan go_best_type.ExitType, a
 				gitUsername,
 				srcPath,
 				config,
-				projectName,
+				fullName,
 				port,
 				lokiUrl,
 				dockerNetwork,
 			)
 			if err != nil {
-				c.logs.Store(projectName, err.Error())
+				c.logs.Store(fullName, err.Error())
 				if alertTgGroupId != "" {
 					tg_sender.NewTgSender(alertTgToken).
 						SetLogger(go_logger.Logger).
 						SendMsg(&tg_sender.MsgStruct{
 							ChatId: alertTgGroupId,
-							Msg:    fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。\n%+v", projectName, env, err),
+							Msg:    fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。\n%+v", fullName, env, err),
 							Ats:    nil,
 						}, 0)
 				}
-				logger.ErrorF("<%s> failed!!! %+v", projectName, err)
+				logger.ErrorF("<%s> failed!!! %+v", fullName, err)
 				return
 			}
 
@@ -82,20 +82,20 @@ func (c *CiManagerType) ProcessOtherAsk(exitChan <-chan go_best_type.ExitType, a
 					SetLogger(go_logger.Logger).
 					SendMsg(&tg_sender.MsgStruct{
 						ChatId: alertTgGroupId,
-						Msg:    fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", projectName, env),
+						Msg:    fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", fullName, env),
 						Ats:    nil,
 					}, 0)
 			}
 
-			logger.InfoF("<%s> done!!!", projectName)
+			logger.InfoF("<%s> done!!!", fullName)
 		}()
 	case constant.ActionType_LOG:
 		msg := data["msg"].(string)
-		projectName := data["project_name"].(string)
-		c.logs.Store(projectName, msg)
+		fullName := data["full_name"].(string)
+		c.logs.Store(fullName, msg)
 	case constant.ActionType_ReadLog:
-		projectName := data["project_name"].(string)
-		d, ok := c.logs.Load(projectName)
+		fullName := data["full_name"].(string)
+		d, ok := c.logs.Load(fullName)
 		if !ok {
 			ask.AnswerChan <- ""
 		} else {
@@ -123,7 +123,7 @@ func (c *CiManagerType) startCi(
 	gitUsername,
 	srcPath,
 	config,
-	projectName string,
+	fullName string,
 	port uint64,
 	lokiUrl string,
 	dockerNetwork string,
@@ -165,7 +165,7 @@ cd ${src}
 git config core.sshCommand "ssh -i `+fetchCodeKey+`"
 git reset --hard && git clean -d -f . && git pull && git checkout `+branch+` && git pull
 
-dockerBaseName="`+strings.ToLower(fmt.Sprintf("%s-%s", gitUsername, projectName))+`"
+dockerBaseName="`+fullName+`"
 
 imageName="${dockerBaseName}:$(git rev-parse --short HEAD)"
 
@@ -225,11 +225,11 @@ rm "$TEMP_FILE"
 			select {
 			case r := <-resultChan:
 				logger.Info(r)
-				d, ok := c.logs.Load(projectName)
+				d, ok := c.logs.Load(fullName)
 				if !ok {
-					c.logs.Store(projectName, r)
+					c.logs.Store(fullName, r)
 				} else {
-					c.logs.Store(projectName, d.(string)+r+"\n")
+					c.logs.Store(fullName, d.(string)+r+"\n")
 				}
 			}
 		}
