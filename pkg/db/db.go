@@ -17,6 +17,7 @@ type Project struct {
 	IdType
 	Name   string  `json:"name"`
 	Config *string `json:"config"`
+	Port   uint64  `json:"port"`
 	Status uint64  `json:"status"`
 	DbTime
 }

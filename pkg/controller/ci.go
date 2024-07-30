@@ -25,7 +25,6 @@ type CiStartParams struct {
 	Env            string `json:"env" validate:"required"`
 	Repo           string `json:"repo" validate:"required"`
 	FetchCodeKey   string `json:"fetch_code_key" validate:"required"`
-	Port           uint64 `json:"port"`
 	AlertTgToken   string `json:"alert_tg_token"`
 	AlertTgGroupId string `json:"alert_tg_group_id"`
 	LokiUrl        string `json:"loki_url"`
@@ -104,7 +103,7 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 					return *project.Config
 				}
 			}(),
-			"port":              params.Port,
+			"port":              project.Port,
 			"alert_tg_token":    params.AlertTgToken,
 			"alert_tg_group_id": params.AlertTgGroupId,
 			"loki_url":          params.LokiUrl,
