@@ -10,6 +10,7 @@ import (
 	"github.com/pefish/go-core/driver/logger"
 	global_api_strategy "github.com/pefish/go-core/global-api-strategy"
 	"github.com/pefish/go-core/service"
+	t_mysql "github.com/pefish/go-interface/t-mysql"
 	go_logger "github.com/pefish/go-logger"
 	go_mysql "github.com/pefish/go-mysql"
 	task_driver "github.com/pefish/go-task-driver"
@@ -31,14 +32,14 @@ func (dc *DefaultCommand) Data() interface{} {
 }
 
 func (dc *DefaultCommand) OnExited(command *commander.Commander) error {
-	go_mysql.MysqlInstance.Close()
+	global.MysqlInstance.Close()
 	return nil
 }
 
 func (dc *DefaultCommand) Init(command *commander.Commander) error {
 
-	go_mysql.MysqlInstance.SetLogger(go_logger.Logger)
-	err := go_mysql.MysqlInstance.ConnectWithConfiguration(go_mysql.Configuration{
+	global.MysqlInstance = go_mysql.NewMysqlInstance(command.Logger)
+	err := global.MysqlInstance.ConnectWithConfiguration(t_mysql.Configuration{
 		Host:     global.GlobalConfig.DbHost,
 		Port:     global.GlobalConfig.DbPort,
 		Username: global.GlobalConfig.DbUser,
@@ -52,7 +53,7 @@ func (dc *DefaultCommand) Init(command *commander.Commander) error {
 	service.Service.SetName(version.AppName)
 	logger.LoggerDriverInstance.Register(go_logger.Logger)
 
-	global.CiManager = ci_manager.NewCiManager(command.Ctx, "CiManager")
+	ci_manager.CiManager = ci_manager.NewCiManager(command.Logger)
 
 	service.Service.SetHost(global.GlobalConfig.ServerHost)
 	service.Service.SetPort(uint64(global.GlobalConfig.ServerPort))

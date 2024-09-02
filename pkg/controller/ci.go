@@ -5,15 +5,14 @@ import (
 	"path"
 	"strings"
 
-	"github.com/pefish/ci-tool/pkg/constant"
+	ci_manager "github.com/pefish/ci-tool/pkg/ci-manager"
 	"github.com/pefish/ci-tool/pkg/db"
 	"github.com/pefish/ci-tool/pkg/global"
-	go_best_type "github.com/pefish/go-best-type"
-	_type "github.com/pefish/go-core-type/api-session"
-	go_error "github.com/pefish/go-error"
+	"github.com/pefish/ci-tool/pkg/util"
+	i_core "github.com/pefish/go-interface/i-core"
+	t_error "github.com/pefish/go-interface/t-error"
+	t_mysql "github.com/pefish/go-interface/t-mysql"
 	go_logger "github.com/pefish/go-logger"
-	go_mysql "github.com/pefish/go-mysql"
-	tg_sender "github.com/pefish/tg-sender"
 )
 
 type CiControllerType struct {
@@ -31,26 +30,23 @@ type CiStartParams struct {
 	DockerNetwork  string `json:"docker_network"`
 }
 
-func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *go_error.ErrorInfo) {
+func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, *t_error.ErrorInfo) {
 	var params CiStartParams
 	err := apiSession.ScanParams(&params)
 	if err != nil {
 		go_logger.Logger.ErrorF("Read params error. %+v", err)
-		return nil, go_error.INTERNAL_ERROR
+		return nil, t_error.INTERNAL_ERROR
 	}
 
 	atPos := strings.Index(params.Repo, "@")
 	if atPos == -1 {
-		if params.AlertTgToken != "" && params.AlertTgGroupId != "" {
-			tg_sender.NewTgSender(params.AlertTgToken).
-				SetLogger(go_logger.Logger).
-				SendMsg(&tg_sender.MsgStruct{
-					ChatId: params.AlertTgGroupId,
-					Msg:    fmt.Sprintf("[ERROR] error: --repo [%s] is illegal.", params.Repo),
-					Ats:    nil,
-				}, 0)
-		}
-		return nil, go_error.WrapWithStr("Repo is illegal..")
+		util.Alert(
+			go_logger.Logger,
+			params.AlertTgToken,
+			params.AlertTgGroupId,
+			fmt.Sprintf("[ERROR] error: --repo [%s] is illegal.", params.Repo),
+		)
+		return nil, t_error.WrapWithStr("Repo is illegal..")
 	}
 	colonPos := strings.Index(params.Repo, ":")
 	slashPos := strings.Index(params.Repo, "/")
@@ -60,9 +56,9 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 
 	// 检查数据库中是否有这个项目
 	var project db.Project
-	notFound, err := go_mysql.MysqlInstance.SelectFirst(
+	notFound, err := global.MysqlInstance.SelectFirst(
 		&project,
-		&go_mysql.SelectParams{
+		&t_mysql.SelectParams{
 			TableName: "project",
 			Select:    "*",
 			Where:     "status = 1 and name = ?",
@@ -71,45 +67,39 @@ func (c *CiControllerType) CiStart(apiSession _type.IApiSession) (interface{}, *
 	)
 	if err != nil {
 		go_logger.Logger.Error(err)
-		return nil, go_error.INTERNAL_ERROR
+		return nil, t_error.INTERNAL_ERROR
 	}
 	if notFound {
-		if params.AlertTgToken != "" && params.AlertTgGroupId != "" {
-			tg_sender.NewTgSender(params.AlertTgToken).
-				SetLogger(go_logger.Logger).
-				SendMsg(&tg_sender.MsgStruct{
-					ChatId: params.AlertTgGroupId,
-					Msg:    fmt.Sprintf("[ERROR] <%s> CI 被禁用。", fullName),
-					Ats:    nil,
-				}, 0)
-		}
+		util.Alert(
+			go_logger.Logger,
+			params.AlertTgToken,
+			params.AlertTgGroupId,
+			fmt.Sprintf("[ERROR] <%s> CI 被禁用。", fullName),
+		)
 
-		return nil, go_error.WrapWithStr("Project disabled.")
+		return nil, t_error.WrapWithStr("Project disabled.")
 	}
 
-	global.CiManager.Ask(&go_best_type.AskType{
-		Action: constant.ActionType_CI,
-		Data: map[string]interface{}{
-			"env":            params.Env,
-			"repo":           params.Repo,
-			"fetch_code_key": params.FetchCodeKey,
-			"git_username":   gitUsername,
-			"full_name":      fullName,
-			"src_path":       path.Join(global.GlobalConfig.SrcDir, gitUsername, projectName),
-			"config": func() string {
-				if project.Config == nil {
-					return ""
-				} else {
-					return *project.Config
-				}
-			}(),
-			"port":              project.Port,
-			"alert_tg_token":    params.AlertTgToken,
-			"alert_tg_group_id": params.AlertTgGroupId,
-			"loki_url":          params.LokiUrl,
-			"docker_network":    params.DockerNetwork,
-		},
-	})
+	go ci_manager.CiManager.StartCi(
+		params.Env,
+		params.Repo,
+		params.FetchCodeKey,
+		gitUsername,
+		path.Join(global.GlobalConfig.SrcDir, gitUsername, projectName),
+		func() string {
+			if project.Config == nil {
+				return ""
+			} else {
+				return *project.Config
+			}
+		}(),
+		fullName,
+		project.Port,
+		params.LokiUrl,
+		params.DockerNetwork,
+		params.AlertTgToken,
+		params.AlertTgGroupId,
+	)
 
 	return true, nil
 }
@@ -118,22 +108,15 @@ type CiLogParams struct {
 	FullName string `json:"name" validate:"required"`
 }
 
-func (c *CiControllerType) CiLog(apiSession _type.IApiSession) (interface{}, *go_error.ErrorInfo) {
+func (c *CiControllerType) CiLog(apiSession i_core.IApiSession) (interface{}, *t_error.ErrorInfo) {
 	var params CiLogParams
 	err := apiSession.ScanParams(&params)
 	if err != nil {
 		go_logger.Logger.ErrorF("Read params error. %+v", err)
-		return nil, go_error.INTERNAL_ERROR
+		return nil, t_error.INTERNAL_ERROR
 	}
 
-	answer := global.CiManager.AskForAnswer(&go_best_type.AskType{
-		Action: constant.ActionType_ReadLog,
-		Data: map[string]interface{}{
-			"full_name": params.FullName,
-		},
-	})
-
-	apiSession.WriteText(answer.(string))
+	apiSession.WriteText(ci_manager.CiManager.Logs(params.FullName))
 
 	return nil, nil
 }

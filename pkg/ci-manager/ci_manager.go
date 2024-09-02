@@ -1,122 +1,95 @@
 package ci_manager
 
 import (
-	"context"
 	"fmt"
 	"os/exec"
 	"strings"
 	"sync"
 
-	"github.com/pefish/ci-tool/pkg/constant"
-	go_best_type "github.com/pefish/go-best-type"
+	"github.com/pefish/ci-tool/pkg/util"
+	i_logger "github.com/pefish/go-interface/i-logger"
 	go_logger "github.com/pefish/go-logger"
 	go_shell "github.com/pefish/go-shell"
-	tg_sender "github.com/pefish/tg-sender"
 	"github.com/pkg/errors"
 )
 
+var CiManager *CiManagerType
+
 type CiManagerType struct {
-	go_best_type.BaseBestType
-	logs sync.Map // map[string]string
+	logs   sync.Map // map[string]string
+	logger i_logger.ILogger
 }
 
-func NewCiManager(ctx context.Context, name string) *CiManagerType {
-	c := &CiManagerType{}
-	c.BaseBestType = *go_best_type.NewBaseBestType(
-		c,
-		name,
-	)
+func NewCiManager(logger i_logger.ILogger) *CiManagerType {
+	c := &CiManagerType{
+		logger: logger,
+	}
 	return c
 }
 
-func (c *CiManagerType) ProcessOtherAsk(exitChan <-chan go_best_type.ExitType, ask *go_best_type.AskType) error {
-	data := ask.Data.(map[string]interface{})
-	switch ask.Action {
-	case constant.ActionType_CI:
-		env := data["env"].(string)
-		repo := data["repo"].(string)
-		fetchCodeKey := data["fetch_code_key"].(string)
-		gitUsername := data["git_username"].(string)
-		fullName := data["full_name"].(string)
-		srcPath := data["src_path"].(string)
-		config := data["config"].(string)
-		port := data["port"].(uint64)
-		alertTgToken := data["alert_tg_token"].(string)
-		alertTgGroupId := data["alert_tg_group_id"].(string)
-		lokiUrl := data["loki_url"].(string)
-		dockerNetwork := data["docker_network"].(string)
-		go func() {
-			logger := go_logger.Logger.CloneWithPrefix(fullName)
-			logger.InfoF("<%s> running...\n", fullName)
-			c.logs.Delete(fullName)
-			err := c.startCi(
-				logger,
-				env,
-				repo,
-				fetchCodeKey,
-				gitUsername,
-				srcPath,
-				config,
-				fullName,
-				port,
-				lokiUrl,
-				dockerNetwork,
-			)
-			if err != nil {
-				c.logs.Store(fullName, err.Error())
-				if alertTgGroupId != "" {
-					tg_sender.NewTgSender(alertTgToken).
-						SetLogger(go_logger.Logger).
-						SendMsg(&tg_sender.MsgStruct{
-							ChatId: alertTgGroupId,
-							Msg:    fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。\n%+v", fullName, env, err),
-							Ats:    nil,
-						}, 0)
-				}
-				logger.ErrorF("<%s> failed!!! %+v", fullName, err)
-				return
-			}
-
-			if alertTgGroupId != "" {
-				tg_sender.NewTgSender(alertTgToken).
-					SetLogger(go_logger.Logger).
-					SendMsg(&tg_sender.MsgStruct{
-						ChatId: alertTgGroupId,
-						Msg:    fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", fullName, env),
-						Ats:    nil,
-					}, 0)
-			}
-
-			logger.InfoF("<%s> done!!!", fullName)
-		}()
-	case constant.ActionType_LOG:
-		msg := data["msg"].(string)
-		fullName := data["full_name"].(string)
-		c.logs.Store(fullName, msg)
-	case constant.ActionType_ReadLog:
-		fullName := data["full_name"].(string)
-		d, ok := c.logs.Load(fullName)
-		if !ok {
-			ask.AnswerChan <- ""
-		} else {
-			ask.AnswerChan <- d.(string)
-		}
-
+func (c *CiManagerType) Logs(fullName string) string {
+	d, ok := c.logs.Load(fullName)
+	if !ok {
+		return ""
+	} else {
+		return d.(string)
 	}
-
-	select {
-	case <-exitChan:
-	}
-
-	return nil
 }
 
-func (c *CiManagerType) Start(exitChan <-chan go_best_type.ExitType, ask *go_best_type.AskType) error {
-	return nil
+func (c *CiManagerType) StartCi(
+	env,
+	repo,
+	fetchCodeKey,
+	gitUsername,
+	srcPath,
+	config,
+	fullName string,
+	port uint64,
+	lokiUrl string,
+	dockerNetwork string,
+	alertTgToken string,
+	alertGroupId string,
+) {
+	c.logs.Delete(fullName)
+	logger := c.logger.CloneWithPrefix(fullName)
+	logger.InfoF("<%s> running...\n", fullName)
+	err := c.startCi(
+		logger,
+		env,
+		repo,
+		fetchCodeKey,
+		gitUsername,
+		srcPath,
+		config,
+		fullName,
+		port,
+		lokiUrl,
+		dockerNetwork,
+	)
+	if err != nil {
+		c.logs.Store(fullName, err.Error())
+		util.Alert(
+			go_logger.Logger,
+			alertTgToken,
+			alertGroupId,
+			fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。\n%+v", fullName, env, err),
+		)
+		logger.ErrorF("<%s> failed!!! %+v", fullName, err)
+		return
+	}
+
+	util.Alert(
+		go_logger.Logger,
+		alertTgToken,
+		alertGroupId,
+		fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", fullName, env),
+	)
+
+	logger.InfoF("<%s> done!!!", fullName)
 }
 
 func (c *CiManagerType) startCi(
-	logger go_logger.InterfaceLogger,
+	logger i_logger.ILogger,
 	env,
 	repo,
 	fetchCodeKey,
@@ -128,6 +101,7 @@ func (c *CiManagerType) startCi(
 	lokiUrl string,
 	dockerNetwork string,
 ) error {
+
 	if env != "test" && env != "prod" {
 		return errors.New("Env is illegal.")
 	}
