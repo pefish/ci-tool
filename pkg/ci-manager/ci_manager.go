@@ -8,7 +8,6 @@ import (
 
 	"github.com/pefish/ci-tool/pkg/util"
 	i_logger "github.com/pefish/go-interface/i-logger"
-	go_logger "github.com/pefish/go-logger"
 	go_shell "github.com/pefish/go-shell"
 	"github.com/pkg/errors"
 )
@@ -69,7 +68,7 @@ func (c *CiManagerType) StartCi(
 	if err != nil {
 		c.logs.Store(fullName, err.Error())
 		util.Alert(
-			go_logger.Logger,
+			c.logger,
 			alertTgToken,
 			alertGroupId,
 			fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。\n%+v", fullName, env, err),
@@ -79,7 +78,7 @@ func (c *CiManagerType) StartCi(
 	}
 
 	util.Alert(
-		go_logger.Logger,
+		c.logger,
 		alertTgToken,
 		alertGroupId,
 		fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", fullName, env),

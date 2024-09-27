@@ -12,7 +12,7 @@ import (
 	i_core "github.com/pefish/go-interface/i-core"
 	t_error "github.com/pefish/go-interface/t-error"
 	t_mysql "github.com/pefish/go-interface/t-mysql"
-	go_logger "github.com/pefish/go-logger"
+	go_shell "github.com/pefish/go-shell"
 )
 
 type CiControllerType struct {
@@ -34,14 +34,14 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 	var params CiStartParams
 	err := apiSession.ScanParams(&params)
 	if err != nil {
-		go_logger.Logger.ErrorF("Read params error. %+v", err)
+		apiSession.Logger().ErrorF("Read params error. %+v", err)
 		return nil, t_error.INTERNAL_ERROR
 	}
 
 	atPos := strings.Index(params.Repo, "@")
 	if atPos == -1 {
 		util.Alert(
-			go_logger.Logger,
+			apiSession.Logger(),
 			params.AlertTgToken,
 			params.AlertTgGroupId,
 			fmt.Sprintf("[ERROR] error: --repo [%s] is illegal.", params.Repo),
@@ -66,12 +66,12 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 		fullName,
 	)
 	if err != nil {
-		go_logger.Logger.Error(err)
+		apiSession.Logger().Error(err)
 		return nil, t_error.INTERNAL_ERROR
 	}
 	if notFound {
 		util.Alert(
-			go_logger.Logger,
+			apiSession.Logger(),
 			params.AlertTgToken,
 			params.AlertTgGroupId,
 			fmt.Sprintf("[ERROR] <%s> CI 被禁用。", fullName),
@@ -112,11 +112,36 @@ func (c *CiControllerType) CiLog(apiSession i_core.IApiSession) (interface{}, *t
 	var params CiLogParams
 	err := apiSession.ScanParams(&params)
 	if err != nil {
-		go_logger.Logger.ErrorF("Read params error. %+v", err)
+		apiSession.Logger().ErrorF("Read params error. %+v", err)
 		return nil, t_error.INTERNAL_ERROR
 	}
 
 	apiSession.WriteText(ci_manager.CiManager.Logs(params.FullName))
 
 	return nil, nil
+}
+
+type DockerLogsParams struct {
+	Name  string `json:"name" validate:"required"`
+	Lines uint64 `json:"lines" default:"200"`
+}
+
+func (c *CiControllerType) DockerLogs(apiSession i_core.IApiSession) (interface{}, *t_error.ErrorInfo) {
+	var params DockerLogsParams
+	err := apiSession.ScanParams(&params)
+	if err != nil {
+		apiSession.Logger().ErrorF("Read params error. %+v", err)
+		return nil, t_error.INTERNAL_ERROR
+	}
+
+	cmdStr := fmt.Sprintf("sudo docker logs %s --tail %d", params.Name, params.Lines)
+	apiSession.Logger().Debug(cmdStr)
+	cmd := go_shell.NewCmd(cmdStr)
+	result, err := go_shell.ExecForResult(cmd)
+	if err != nil {
+		apiSession.Logger().ErrorF("Exec docker logs error. %+v", err)
+		return nil, t_error.INTERNAL_ERROR
+	}
+
+	return result, nil
 }

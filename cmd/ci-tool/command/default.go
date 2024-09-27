@@ -11,7 +11,6 @@ import (
 	global_api_strategy "github.com/pefish/go-core/global-api-strategy"
 	"github.com/pefish/go-core/service"
 	t_mysql "github.com/pefish/go-interface/t-mysql"
-	go_logger "github.com/pefish/go-logger"
 	go_mysql "github.com/pefish/go-mysql"
 	task_driver "github.com/pefish/go-task-driver"
 )
@@ -51,7 +50,7 @@ func (dc *DefaultCommand) Init(command *commander.Commander) error {
 	}
 
 	service.Service.SetName(version.AppName)
-	logger.LoggerDriverInstance.Register(go_logger.Logger)
+	logger.LoggerDriverInstance.Register(command.Logger)
 
 	ci_manager.CiManager = ci_manager.NewCiManager(command.Logger)
 

@@ -19,4 +19,10 @@ var CiRoute = []*api.Api{
 		Params:         controller.CiLogParams{},
 		ControllerFunc: controller.CiController.CiLog,
 	}),
+	api.NewApi(&api.NewApiParamsType{
+		Path:           "/v1/docker-logs",
+		Method:         gorequest.GET,
+		Params:         controller.DockerLogsParams{},
+		ControllerFunc: controller.CiController.DockerLogs,
+	}),
 }

@@ -1,10 +1,11 @@
 package main
 
 import (
+	"log"
+
 	"github.com/pefish/ci-tool/cmd/ci-tool/command"
 	"github.com/pefish/ci-tool/version"
 	"github.com/pefish/go-commander"
-	"github.com/pefish/go-logger"
 )
 
 func main() {
@@ -16,6 +17,6 @@ func main() {
 	})
 	err := commanderInstance.Run()
 	if err != nil {
-		go_logger.Logger.Error(err)
+		log.Fatal(err)
 	}
 }
