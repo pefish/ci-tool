@@ -143,5 +143,7 @@ func (c *CiControllerType) DockerLogs(apiSession i_core.IApiSession) (interface{
 		return nil, t_error.INTERNAL_ERROR
 	}
 
-	return result, nil
+	apiSession.WriteText(result)
+
+	return nil, nil
 }
