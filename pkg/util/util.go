@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// 1769f0d0-fbbc-45bb-9f60-da2c04776e56
 func Alert(logger i_logger.ILogger, msg string) error {
 	switch global.GlobalConfig.AlertType {
 	case "weixin":
