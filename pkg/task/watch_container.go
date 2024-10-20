@@ -39,11 +39,24 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 		&t_mysql.SelectParams{
 			TableName: "project",
 			Select:    "*",
-			Where:     "status = 1",
 		},
 	)
 	if err != nil {
 		return err
+	}
+
+	// 禁用的项目从 deadProjects 中移除
+	for _, project := range projects {
+		containerName := fmt.Sprintf("%s-prod", project.Name)
+		if project.Status == 1 {
+			continue
+		}
+		if !slices.Contains(t.deadProjects, containerName) {
+			continue
+		}
+		t.deadProjects = slices.DeleteFunc(t.deadProjects, func(containerName_ string) bool {
+			return containerName_ == containerName
+		})
 	}
 
 	aliveProjects, err := ListAllAliveContainers()
@@ -53,6 +66,9 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 
 	for _, project := range projects {
 		containerName := fmt.Sprintf("%s-prod", project.Name)
+		if project.Status == 0 {
+			continue
+		}
 		isAlive := false
 		for _, aliveProject := range aliveProjects {
 			if strings.EqualFold(containerName, aliveProject) {
