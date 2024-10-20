@@ -54,6 +54,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 		if !slices.Contains(t.deadProjects, containerName) {
 			continue
 		}
+		t.logger.InfoF("<%s> 从 deadProjects 中移除", containerName)
 		t.deadProjects = slices.DeleteFunc(t.deadProjects, func(containerName_ string) bool {
 			return containerName_ == containerName
 		})
