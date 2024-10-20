@@ -46,8 +46,6 @@ func (c *CiManagerType) StartCi(
 	port uint64,
 	lokiUrl string,
 	dockerNetwork string,
-	alertTgToken string,
-	alertGroupId string,
 ) {
 	c.logs.Delete(fullName)
 	logger := c.logger.CloneWithPrefix(fullName)
@@ -57,7 +55,6 @@ func (c *CiManagerType) StartCi(
 		env,
 		repo,
 		fetchCodeKey,
-		gitUsername,
 		srcPath,
 		config,
 		fullName,
@@ -69,8 +66,6 @@ func (c *CiManagerType) StartCi(
 		c.logs.Store(fullName, err.Error())
 		util.Alert(
 			c.logger,
-			alertTgToken,
-			alertGroupId,
 			fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。\n%+v", fullName, env, err),
 		)
 		logger.ErrorF("<%s> failed!!! %+v", fullName, err)
@@ -79,8 +74,6 @@ func (c *CiManagerType) StartCi(
 
 	util.Alert(
 		c.logger,
-		alertTgToken,
-		alertGroupId,
 		fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", fullName, env),
 	)
 
@@ -92,7 +85,6 @@ func (c *CiManagerType) startCi(
 	env,
 	repo,
 	fetchCodeKey,
-	gitUsername,
 	srcPath,
 	config,
 	fullName string,

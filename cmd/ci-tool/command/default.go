@@ -5,6 +5,7 @@ import (
 	"github.com/pefish/ci-tool/pkg/constant"
 	"github.com/pefish/ci-tool/pkg/global"
 	"github.com/pefish/ci-tool/pkg/route"
+	"github.com/pefish/ci-tool/pkg/task"
 	"github.com/pefish/ci-tool/version"
 	"github.com/pefish/go-commander"
 	"github.com/pefish/go-core/driver/logger"
@@ -68,6 +69,7 @@ func (dc *DefaultCommand) Start(command *commander.Commander) error {
 
 	taskDriver := task_driver.NewTaskDriver()
 	taskDriver.Register(service.Service)
+	taskDriver.Register(task.NewWatchContainer(command.Logger))
 
 	taskDriver.RunWait(command.Ctx)
 

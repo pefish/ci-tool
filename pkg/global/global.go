@@ -11,8 +11,9 @@ type Config struct {
 	DbUser      string `json:"db-user" default:"" usage:"Username to connect database."`
 	DbPass      string `json:"db-pass" default:"" usage:"Password to connect database."`
 	SrcDir      string `json:"src-dir" default:"~/src" usage:"Source code dir."`
-	AlertToken  string `json:"alert-token" default:"" usage:"Default Alert token."`
-	AlertChatId string `json:"alert-chat-id" default:"" usage:"Default Alert chat id."`
+	AlertType   string `json:"alert-type" default:"weixin" usage:"Alert type. weixin/tg"`
+	AlertToken  string `json:"alert-token" default:"" usage:"Alert token."`
+	AlertChatId string `json:"alert-chat-id" default:"" usage:"Alert chat id."`
 }
 
 var GlobalConfig Config

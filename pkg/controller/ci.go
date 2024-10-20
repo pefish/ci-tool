@@ -21,13 +21,11 @@ type CiControllerType struct {
 var CiController = CiControllerType{}
 
 type CiStartParams struct {
-	Env            string `json:"env" validate:"required"`
-	Repo           string `json:"repo" validate:"required"`
-	FetchCodeKey   string `json:"fetch_code_key" validate:"required"`
-	AlertTgToken   string `json:"alert_tg_token"`
-	AlertTgGroupId string `json:"alert_tg_group_id"`
-	LokiUrl        string `json:"loki_url"`
-	DockerNetwork  string `json:"docker_network"`
+	Env           string `json:"env" validate:"required"`
+	Repo          string `json:"repo" validate:"required"`
+	FetchCodeKey  string `json:"fetch_code_key" validate:"required"`
+	LokiUrl       string `json:"loki_url"`
+	DockerNetwork string `json:"docker_network"`
 }
 
 func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, *t_error.ErrorInfo) {
@@ -42,8 +40,6 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 	if atPos == -1 {
 		util.Alert(
 			apiSession.Logger(),
-			params.AlertTgToken,
-			params.AlertTgGroupId,
 			fmt.Sprintf("[ERROR] error: --repo [%s] is illegal.", params.Repo),
 		)
 		return nil, t_error.WrapWithStr("Repo is illegal..")
@@ -72,8 +68,6 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 	if notFound {
 		util.Alert(
 			apiSession.Logger(),
-			params.AlertTgToken,
-			params.AlertTgGroupId,
 			fmt.Sprintf("[ERROR] <%s> CI 被禁用。", fullName),
 		)
 
@@ -97,8 +91,6 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 		project.Port,
 		params.LokiUrl,
 		params.DockerNetwork,
-		params.AlertTgToken,
-		params.AlertTgGroupId,
 	)
 
 	return true, nil

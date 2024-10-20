@@ -7,7 +7,6 @@ require (
 	github.com/pefish/go-core v1.5.2
 	github.com/pefish/go-http v0.8.4
 	github.com/pefish/go-interface v0.1.2
-	github.com/pefish/go-logger v0.6.2
 	github.com/pefish/go-mysql v1.6.4
 	github.com/pefish/go-shell v0.1.1
 	github.com/pefish/go-task-driver v0.2.4
@@ -33,6 +32,7 @@ require (
 	github.com/pefish/go-desensitize v0.0.7 // indirect
 	github.com/pefish/go-format v0.4.1 // indirect
 	github.com/pefish/go-json v0.1.7 // indirect
+	github.com/pefish/go-logger v0.6.2 // indirect
 	github.com/pefish/go-string v0.1.2 // indirect
 	github.com/pefish/go-time v0.3.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
