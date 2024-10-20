@@ -45,21 +45,27 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 		return err
 	}
 
-	// 禁用的项目从 deadProjects 中移除
-	for _, project := range projects {
-		containerName := fmt.Sprintf("%s-prod", project.Name)
-		if project.Status == 1 {
+	// 删除的项目从 deadProjects 中移除
+	newList := make([]string, 0)
+	copy(newList, t.deadProjects)
+	for _, deadProject := range newList {
+		shouldCheck := false
+		for _, project := range projects {
+			if strings.EqualFold(project.Name, deadProject) && project.Status == 1 {
+				shouldCheck = true
+				break
+			}
+		}
+		if shouldCheck {
 			continue
 		}
-		if !slices.Contains(t.deadProjects, containerName) {
-			continue
-		}
-		t.logger.InfoF("<%s> 从 deadProjects 中移除", containerName)
+		t.logger.InfoF("<%s> 从 deadProjects 中移除", deadProject)
 		t.deadProjects = slices.DeleteFunc(t.deadProjects, func(containerName_ string) bool {
-			return containerName_ == containerName
+			return containerName_ == deadProject
 		})
 	}
 
+	// 检查需要监控的项目
 	aliveProjects, err := ListAllAliveContainers()
 	if err != nil {
 		return err
