@@ -10,6 +10,7 @@ import (
 	"github.com/pefish/ci-tool/pkg/db"
 	"github.com/pefish/ci-tool/pkg/global"
 	"github.com/pefish/ci-tool/pkg/util"
+	go_format_slice "github.com/pefish/go-format/slice"
 	i_logger "github.com/pefish/go-interface/i-logger"
 	t_mysql "github.com/pefish/go-interface/t-mysql"
 	go_shell "github.com/pefish/go-shell"
@@ -46,9 +47,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 	}
 
 	// 删除的项目从 deadProjects 中移除
-	newList := make([]string, 0)
-	copy(newList, t.deadProjects)
-	for _, deadProject := range newList {
+	for _, deadProject := range go_format_slice.DeepCopy(t.deadProjects) {
 		shouldCheck := false
 		for _, project := range projects {
 			if strings.EqualFold(project.Name, deadProject) && project.Status == 1 {
