@@ -50,7 +50,8 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 	for _, deadProject := range go_format_slice.DeepCopy(t.deadProjects) {
 		shouldCheck := false
 		for _, project := range projects {
-			if strings.EqualFold(project.Name, deadProject) && project.Status == 1 {
+			containerName := fmt.Sprintf("%s-prod", project.Name)
+			if strings.EqualFold(containerName, deadProject) && project.Status == 1 {
 				shouldCheck = true
 				break
 			}
