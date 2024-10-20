@@ -120,7 +120,7 @@ func (t *WatchContainer) Name() string {
 }
 
 func (t *WatchContainer) Interval() time.Duration {
-	return 5 * time.Minute
+	return time.Minute
 }
 
 func (t *WatchContainer) Logger() i_logger.ILogger {
