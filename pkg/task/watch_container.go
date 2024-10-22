@@ -14,16 +14,19 @@ import (
 	i_logger "github.com/pefish/go-interface/i-logger"
 	t_mysql "github.com/pefish/go-interface/t-mysql"
 	go_shell "github.com/pefish/go-shell"
+	"github.com/pkg/errors"
 )
 
 type WatchContainer struct {
-	logger       i_logger.ILogger
-	deadProjects []string
+	logger         i_logger.ILogger
+	deadProjects   []string
+	lastNotifyTime map[string]time.Time
 }
 
 func NewWatchContainer(logger i_logger.ILogger) *WatchContainer {
 	w := &WatchContainer{
-		deadProjects: make([]string, 0),
+		deadProjects:   make([]string, 0),
+		lastNotifyTime: make(map[string]time.Time, 0),
 	}
 	w.logger = logger.CloneWithPrefix(w.Name())
 	return w
@@ -89,6 +92,9 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 				t.deadProjects = slices.DeleteFunc(t.deadProjects, func(containerName_ string) bool {
 					return containerName_ == containerName
 				})
+				util.Alert(t.logger, fmt.Sprintf(`
+项目 <%s> 已复活
+`, containerName))
 			}
 			continue
 		}
@@ -96,6 +102,40 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 		if !slices.Contains(t.deadProjects, containerName) {
 			t.logger.InfoF("<%s> 意外终止，下次检查如果还处于终止状态，则会报警", containerName)
 			t.deadProjects = append(t.deadProjects, containerName)
+
+			// 记录错误信息
+			errorMsg, err := FetchErrorMsgFromContainer(containerName)
+			if err != nil {
+				return err
+			}
+			_, err = global.MysqlInstance.Update(
+				&t_mysql.UpdateParams{
+					TableName: "project",
+					Update: map[string]interface{}{
+						"last_error": errorMsg,
+					},
+					Where: map[string]interface{}{
+						"id": project.Id,
+					},
+				},
+			)
+			if err != nil {
+				return err
+			}
+			if project.IsAutoRestart == 1 {
+				err = StartContainer(containerName)
+				if err != nil {
+					return err
+				}
+				util.Alert(t.logger, fmt.Sprintf(`
+项目 <%s> 已重启，请关注错误信息
+`, containerName))
+			}
+			continue
+		}
+
+		if time.Since(t.lastNotifyTime[containerName]) < 10*time.Minute {
+			t.logger.InfoF("<%s> 短时间内报警过，略过报警", containerName)
 			continue
 		}
 
@@ -103,6 +143,26 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 		util.Alert(t.logger, fmt.Sprintf(`
 项目 <%s> 意外终止，请检查
 `, containerName))
+		t.lastNotifyTime[containerName] = time.Now()
+	}
+	return nil
+}
+
+func FetchErrorMsgFromContainer(containerName string) (string, error) {
+	result, err := go_shell.ExecForResult(go_shell.NewCmd(fmt.Sprintf(`sudo docker logs %s --tail 200"`, containerName)))
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
+func StartContainer(containerName string) error {
+	result, err := go_shell.ExecForResult(go_shell.NewCmd(fmt.Sprintf(`sudo docker start %s"`, containerName)))
+	if err != nil {
+		return err
+	}
+	if strings.Contains(result, "Error") {
+		return errors.New(result)
 	}
 	return nil
 }
