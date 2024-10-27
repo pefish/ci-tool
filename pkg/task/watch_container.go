@@ -69,7 +69,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 	}
 
 	// 检查需要监控的项目
-	aliveProjects, err := ListAllAliveContainers()
+	aliveProjects, err := ListAllAliveContainers(t.logger)
 	if err != nil {
 		return err
 	}
@@ -171,8 +171,10 @@ func StartContainer(logger i_logger.ILogger, containerName string) error {
 	return nil
 }
 
-func ListAllAliveContainers() ([]string, error) {
-	result, err := go_shell.ExecForResult(go_shell.NewCmd(`sudo docker ps --format "table {{.Names}}"`))
+func ListAllAliveContainers(logger i_logger.ILogger) ([]string, error) {
+	cmd := go_shell.NewCmd(`sudo docker ps --format "table {{.Names}}"`)
+	logger.DebugF("Exec shell: <%s>", cmd.String())
+	result, err := go_shell.ExecForResult(cmd)
 	if err != nil {
 		return nil, err
 	}
