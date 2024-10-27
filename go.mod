@@ -9,7 +9,7 @@ require (
 	github.com/pefish/go-http v0.8.4
 	github.com/pefish/go-interface v0.1.2
 	github.com/pefish/go-mysql v1.7.1
-	github.com/pefish/go-shell v0.1.2
+	github.com/pefish/go-shell v0.1.3
 	github.com/pefish/go-task-driver v0.2.4
 	github.com/pefish/tg-sender v0.1.1
 	github.com/pkg/errors v0.9.1

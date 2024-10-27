@@ -101,22 +101,24 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 			// 记录错误信息
 			errorMsg, err := FetchErrorMsgFromContainer(t.logger, containerName)
 			if err != nil {
-				return err
-			}
-			_, err = global.MysqlInstance.Update(
-				&t_mysql.UpdateParams{
-					TableName: "project",
-					Update: map[string]interface{}{
-						"last_error": errorMsg,
+				t.logger.InfoF("docker logs 命令执行出错：%+v", err)
+			} else {
+				_, err = global.MysqlInstance.Update(
+					&t_mysql.UpdateParams{
+						TableName: "project",
+						Update: map[string]interface{}{
+							"last_error": errorMsg,
+						},
+						Where: map[string]interface{}{
+							"id": project.Id,
+						},
 					},
-					Where: map[string]interface{}{
-						"id": project.Id,
-					},
-				},
-			)
-			if err != nil {
-				return err
+				)
+				if err != nil {
+					t.logger.Info(err)
+				}
 			}
+
 			if project.IsAutoRestart == 1 {
 				err = StartContainer(t.logger, containerName)
 				if err != nil {

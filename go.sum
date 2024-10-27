@@ -55,6 +55,8 @@ github.com/pefish/go-mysql v1.7.1 h1:P8S1jSpP+Rubvhaau/4sDIG1D2LPz4h8L6ATDKRMtRQ
 github.com/pefish/go-mysql v1.7.1/go.mod h1:DVY6CLhNvlqdZh7UT5CwjzXHRW8jie8N+TlMXd2Hl+k=
 github.com/pefish/go-shell v0.1.2 h1:vm2dDUMQcKfQ3wsoXyaFWs/afB3ICoO8cVHn6ImkRNY=
 github.com/pefish/go-shell v0.1.2/go.mod h1:bsdtTFbQbHxTp8IlvIjDY8Eb5WUKDNQjuLEzidwHzv0=
+github.com/pefish/go-shell v0.1.3 h1:Szo0tadQX/7mXAKfQ2UPlKKeTW0cV28gSAtrJqPe/7Q=
+github.com/pefish/go-shell v0.1.3/go.mod h1:sBxCrnq15tI94/Eefi3rDoI/VI76mXI5ZB3NpekFEnc=
 github.com/pefish/go-string v0.1.2 h1:l4c8082Fp+Niy+/yapax2p2Tnck9Y5D1Z9iBhUDoP4I=
 github.com/pefish/go-string v0.1.2/go.mod h1:ZMKPtawOqjSiE40Rm2zg1mAMwFqSh0ENORRDJLKa2Nk=
 github.com/pefish/go-task-driver v0.2.4 h1:ac4KPKUuJWzq5mxHowhEHwOnvbpYMJH1lu3mWr4Oles=

@@ -27,6 +27,9 @@ type Data struct {
 
 var GlobalConfig Config
 
-var GlobalData Data
+var GlobalData Data = Data{
+	DeadProjects:   make([]string, 0),
+	LastNotifyTime: make(map[string]time.Time, 0),
+}
 
 var MysqlInstance *go_mysql.MysqlType
