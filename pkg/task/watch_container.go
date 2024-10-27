@@ -104,7 +104,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 			t.deadProjects = append(t.deadProjects, containerName)
 
 			// 记录错误信息
-			errorMsg, err := FetchErrorMsgFromContainer(containerName)
+			errorMsg, err := FetchErrorMsgFromContainer(t.logger, containerName)
 			if err != nil {
 				return err
 			}
@@ -123,7 +123,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 				return err
 			}
 			if project.IsAutoRestart == 1 {
-				err = StartContainer(containerName)
+				err = StartContainer(t.logger, containerName)
 				if err != nil {
 					return err
 				}
@@ -148,16 +148,20 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 	return nil
 }
 
-func FetchErrorMsgFromContainer(containerName string) (string, error) {
-	result, err := go_shell.ExecForResult(go_shell.NewCmd(fmt.Sprintf(`sudo docker logs %s --tail 200"`, containerName)))
+func FetchErrorMsgFromContainer(logger i_logger.ILogger, containerName string) (string, error) {
+	cmd := go_shell.NewCmd(`sudo docker logs %s --tail 200"`, containerName)
+	logger.DebugF("Exec shell: <%s>", cmd.String())
+	result, err := go_shell.ExecForResult(cmd)
 	if err != nil {
 		return "", err
 	}
 	return result, nil
 }
 
-func StartContainer(containerName string) error {
-	result, err := go_shell.ExecForResult(go_shell.NewCmd(fmt.Sprintf(`sudo docker start %s"`, containerName)))
+func StartContainer(logger i_logger.ILogger, containerName string) error {
+	cmd := go_shell.NewCmd(`sudo docker start %s"`, containerName)
+	logger.DebugF("Exec shell: <%s>", cmd.String())
+	result, err := go_shell.ExecForResult(cmd)
 	if err != nil {
 		return err
 	}
