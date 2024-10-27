@@ -1,6 +1,10 @@
 package global
 
-import go_mysql "github.com/pefish/go-mysql"
+import (
+	"time"
+
+	go_mysql "github.com/pefish/go-mysql"
+)
 
 type Config struct {
 	ServerHost  string `json:"server-host" default:"127.0.0.1" usage:"Web server host."`
@@ -16,6 +20,13 @@ type Config struct {
 	AlertChatId string `json:"alert-chat-id" default:"" usage:"Alert chat id."`
 }
 
+type Data struct {
+	DeadProjects   []string             `json:"dead_projects"`
+	LastNotifyTime map[string]time.Time `json:"last_notify_time"`
+}
+
 var GlobalConfig Config
+
+var GlobalData Data
 
 var MysqlInstance *go_mysql.MysqlType

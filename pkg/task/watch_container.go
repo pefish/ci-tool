@@ -18,16 +18,11 @@ import (
 )
 
 type WatchContainer struct {
-	logger         i_logger.ILogger
-	deadProjects   []string
-	lastNotifyTime map[string]time.Time
+	logger i_logger.ILogger
 }
 
 func NewWatchContainer(logger i_logger.ILogger) *WatchContainer {
-	w := &WatchContainer{
-		deadProjects:   make([]string, 0),
-		lastNotifyTime: make(map[string]time.Time, 0),
-	}
+	w := &WatchContainer{}
 	w.logger = logger.CloneWithPrefix(w.Name())
 	return w
 }
@@ -50,7 +45,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 	}
 
 	// 删除的项目从 deadProjects 中移除
-	for _, deadProject := range go_format_slice.DeepCopy(t.deadProjects) {
+	for _, deadProject := range go_format_slice.DeepCopy(global.GlobalData.DeadProjects) {
 		shouldCheck := false
 		for _, project := range projects {
 			containerName := fmt.Sprintf("%s-prod", project.Name)
@@ -63,7 +58,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 			continue
 		}
 		t.logger.InfoF("<%s> 从 deadProjects 中移除", deadProject)
-		t.deadProjects = slices.DeleteFunc(t.deadProjects, func(containerName_ string) bool {
+		global.GlobalData.DeadProjects = slices.DeleteFunc(global.GlobalData.DeadProjects, func(containerName_ string) bool {
 			return containerName_ == deadProject
 		})
 	}
@@ -87,9 +82,9 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 			}
 		}
 		if isAlive {
-			if slices.Contains(t.deadProjects, containerName) {
+			if slices.Contains(global.GlobalData.DeadProjects, containerName) {
 				t.logger.InfoF("<%s> 复活，从 deadProjects 中移除", containerName)
-				t.deadProjects = slices.DeleteFunc(t.deadProjects, func(containerName_ string) bool {
+				global.GlobalData.DeadProjects = slices.DeleteFunc(global.GlobalData.DeadProjects, func(containerName_ string) bool {
 					return containerName_ == containerName
 				})
 				util.Alert(t.logger, fmt.Sprintf(`
@@ -99,9 +94,9 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 			continue
 		}
 
-		if !slices.Contains(t.deadProjects, containerName) {
+		if !slices.Contains(global.GlobalData.DeadProjects, containerName) {
 			t.logger.InfoF("<%s> 意外终止，下次检查如果还处于终止状态，则会报警", containerName)
-			t.deadProjects = append(t.deadProjects, containerName)
+			global.GlobalData.DeadProjects = append(global.GlobalData.DeadProjects, containerName)
 
 			// 记录错误信息
 			errorMsg, err := FetchErrorMsgFromContainer(t.logger, containerName)
@@ -134,7 +129,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 			continue
 		}
 
-		if time.Since(t.lastNotifyTime[containerName]) < 10*time.Minute {
+		if time.Since(global.GlobalData.LastNotifyTime[containerName]) < 10*time.Minute {
 			t.logger.InfoF("<%s> 短时间内报警过，略过报警", containerName)
 			continue
 		}
@@ -143,7 +138,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 		util.Alert(t.logger, fmt.Sprintf(`
 项目 <%s> 意外终止，请检查
 `, containerName))
-		t.lastNotifyTime[containerName] = time.Now()
+		global.GlobalData.LastNotifyTime[containerName] = time.Now()
 	}
 	return nil
 }

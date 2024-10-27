@@ -28,7 +28,7 @@ func (dc *DefaultCommand) Config() interface{} {
 }
 
 func (dc *DefaultCommand) Data() interface{} {
-	return nil
+	return &global.GlobalData
 }
 
 func (dc *DefaultCommand) OnExited(command *commander.Commander) error {
