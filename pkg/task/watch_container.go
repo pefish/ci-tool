@@ -146,7 +146,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 }
 
 func FetchErrorMsgFromContainer(logger i_logger.ILogger, containerName string) (string, error) {
-	cmd := go_shell.NewCmd(`sudo docker logs %s --tail 200"`, containerName)
+	cmd := go_shell.NewCmd("sudo docker logs %s --tail 200", containerName)
 	logger.DebugF("Exec shell: <%s>", cmd.String())
 	result, err := go_shell.ExecForResult(cmd)
 	if err != nil {
@@ -156,7 +156,7 @@ func FetchErrorMsgFromContainer(logger i_logger.ILogger, containerName string) (
 }
 
 func StartContainer(logger i_logger.ILogger, containerName string) error {
-	cmd := go_shell.NewCmd(`sudo docker start %s"`, containerName)
+	cmd := go_shell.NewCmd("sudo docker start %s", containerName)
 	logger.DebugF("Exec shell: <%s>", cmd.String())
 	result, err := go_shell.ExecForResult(cmd)
 	if err != nil {
