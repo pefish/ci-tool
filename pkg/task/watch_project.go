@@ -84,7 +84,8 @@ func (t *WatchProject) Run(ctx context.Context) error {
 				&t_mysql.UpdateParams{
 					TableName: "project",
 					Update: map[string]interface{}{
-						"stop": 0,
+						"stop":            0,
+						"is_auto_restart": 0,
 					},
 					Where: map[string]interface{}{
 						"id": project.Id,
