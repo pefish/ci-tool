@@ -2,11 +2,13 @@ package util
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pefish/ci-tool/pkg/global"
 	go_http "github.com/pefish/go-http"
 	i_logger "github.com/pefish/go-interface/i-logger"
+	go_shell "github.com/pefish/go-shell"
 	tg_sender "github.com/pefish/tg-sender"
 	"github.com/pkg/errors"
 )
@@ -55,4 +57,65 @@ func Alert(logger i_logger.ILogger, msg string) error {
 	}
 
 	return nil
+}
+
+func FetchErrorMsgFromContainer(logger i_logger.ILogger, containerName string) (string, error) {
+	cmd := go_shell.NewCmd("sudo docker logs %s --tail 200", containerName)
+	logger.DebugF("Exec shell: <%s>", cmd.String())
+	result, err := go_shell.ExecForResult(cmd)
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
+func StartContainer(logger i_logger.ILogger, containerName string) error {
+	cmd := go_shell.NewCmd("sudo docker start %s", containerName)
+	logger.DebugF("Exec shell: <%s>", cmd.String())
+	result, err := go_shell.ExecForResult(cmd)
+	if err != nil {
+		return err
+	}
+	if strings.Contains(result, "Error") {
+		return errors.New(result)
+	}
+	return nil
+}
+
+func StopContainer(logger i_logger.ILogger, containerName string) error {
+	cmd := go_shell.NewCmd("sudo docker stop %s", containerName)
+	logger.DebugF("Exec shell: <%s>", cmd.String())
+	result, err := go_shell.ExecForResult(cmd)
+	if err != nil {
+		return err
+	}
+	if strings.Contains(result, "Error") {
+		return errors.New(result)
+	}
+	return nil
+}
+
+func RestartContainer(logger i_logger.ILogger, containerName string) error {
+	cmd := go_shell.NewCmd("sudo docker restart %s", containerName)
+	logger.DebugF("Exec shell: <%s>", cmd.String())
+	result, err := go_shell.ExecForResult(cmd)
+	if err != nil {
+		return err
+	}
+	if strings.Contains(result, "Error") {
+		return errors.New(result)
+	}
+	return nil
+}
+
+func ListAllAliveContainers(logger i_logger.ILogger) ([]string, error) {
+	cmd := go_shell.NewCmd(`sudo docker ps --format "table {{.Names}}"`)
+	logger.DebugF("Exec shell: <%s>", cmd.String())
+	result, err := go_shell.ExecForResult(cmd)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(result, "\n")
+
+	return lines[1 : len(lines)-1], nil
 }

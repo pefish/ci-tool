@@ -13,8 +13,6 @@ import (
 	go_format_slice "github.com/pefish/go-format/slice"
 	i_logger "github.com/pefish/go-interface/i-logger"
 	t_mysql "github.com/pefish/go-interface/t-mysql"
-	go_shell "github.com/pefish/go-shell"
-	"github.com/pkg/errors"
 )
 
 type WatchContainer struct {
@@ -64,7 +62,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 	}
 
 	// 检查需要监控的项目
-	aliveProjects, err := ListAllAliveContainers(t.logger)
+	aliveProjects, err := util.ListAllAliveContainers(t.logger)
 	if err != nil {
 		return err
 	}
@@ -99,7 +97,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 			global.GlobalData.DeadProjects = append(global.GlobalData.DeadProjects, containerName)
 
 			// 记录错误信息
-			errorMsg, err := FetchErrorMsgFromContainer(t.logger, containerName)
+			errorMsg, err := util.FetchErrorMsgFromContainer(t.logger, containerName)
 			if err != nil {
 				t.logger.InfoF("docker logs 命令执行出错：%+v", err)
 			} else {
@@ -120,7 +118,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 			}
 
 			if project.IsAutoRestart == 1 {
-				err = StartContainer(t.logger, containerName)
+				err = util.StartContainer(t.logger, containerName)
 				if err != nil {
 					return err
 				}
@@ -143,41 +141,6 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 		global.GlobalData.LastNotifyTime[containerName] = time.Now()
 	}
 	return nil
-}
-
-func FetchErrorMsgFromContainer(logger i_logger.ILogger, containerName string) (string, error) {
-	cmd := go_shell.NewCmd("sudo docker logs %s --tail 200", containerName)
-	logger.DebugF("Exec shell: <%s>", cmd.String())
-	result, err := go_shell.ExecForResult(cmd)
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
-
-func StartContainer(logger i_logger.ILogger, containerName string) error {
-	cmd := go_shell.NewCmd("sudo docker start %s", containerName)
-	logger.DebugF("Exec shell: <%s>", cmd.String())
-	result, err := go_shell.ExecForResult(cmd)
-	if err != nil {
-		return err
-	}
-	if strings.Contains(result, "Error") {
-		return errors.New(result)
-	}
-	return nil
-}
-
-func ListAllAliveContainers(logger i_logger.ILogger) ([]string, error) {
-	cmd := go_shell.NewCmd(`sudo docker ps --format "table {{.Names}}"`)
-	logger.DebugF("Exec shell: <%s>", cmd.String())
-	result, err := go_shell.ExecForResult(cmd)
-	if err != nil {
-		return nil, err
-	}
-	lines := strings.Split(result, "\n")
-
-	return lines[1 : len(lines)-1], nil
 }
 
 func (t *WatchContainer) Stop() error {

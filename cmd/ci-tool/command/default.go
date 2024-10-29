@@ -70,6 +70,7 @@ func (dc *DefaultCommand) Start(command *commander.Commander) error {
 	taskDriver := task_driver.NewTaskDriver()
 	taskDriver.Register(service.Service)
 	taskDriver.Register(task.NewWatchContainer(command.Logger))
+	taskDriver.Register(task.NewWatchProject(command.Logger))
 
 	taskDriver.RunWait(command.Ctx)
 

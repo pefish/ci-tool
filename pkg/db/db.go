@@ -20,5 +20,8 @@ type Project struct {
 	Port          uint64  `json:"port"`
 	Status        uint64  `json:"status"`
 	IsAutoRestart uint64  `json:"is_auto_restart"`
+	Restart       uint64  `json:"restart"`
+	Stop          uint64  `json:"stop"`
+	Start         uint64  `json:"start"`
 	DbTime
 }
