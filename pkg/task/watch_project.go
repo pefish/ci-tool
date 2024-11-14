@@ -136,8 +136,8 @@ func (t *WatchProject) Run(ctx context.Context) error {
 
 			if project.Params == nil {
 				util.Alert(t.logger, fmt.Sprintf(`
-项目 <%s> 没有 params，重新构建失败 (%s)
-				`, containerName, err.Error()))
+项目 <%s> 重新构建失败 (没有 params)
+				`, containerName))
 				continue
 			}
 
