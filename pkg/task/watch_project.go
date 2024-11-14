@@ -3,8 +3,11 @@ package task
 import (
 	"context"
 	"fmt"
+	"path"
+	"strings"
 	"time"
 
+	ci_manager "github.com/pefish/ci-tool/pkg/ci-manager"
 	"github.com/pefish/ci-tool/pkg/db"
 	"github.com/pefish/ci-tool/pkg/global"
 	"github.com/pefish/ci-tool/pkg/util"
@@ -116,6 +119,55 @@ func (t *WatchProject) Run(ctx context.Context) error {
 					},
 				},
 			)
+		}
+
+		if project.Rebuild == 1 {
+			global.MysqlInstance.Update(
+				&t_mysql.UpdateParams{
+					TableName: "project",
+					Update: map[string]interface{}{
+						"rebuild": 0,
+					},
+					Where: map[string]interface{}{
+						"id": project.Id,
+					},
+				},
+			)
+
+			if project.Params == nil {
+				util.Alert(t.logger, fmt.Sprintf(`
+项目 <%s> 没有 params，重新构建失败 (%s)
+				`, containerName, err.Error()))
+				continue
+			}
+
+			colonPos := strings.Index(project.Params.Repo, ":")
+			slashPos := strings.Index(project.Params.Repo, "/")
+			gitUsername := project.Params.Repo[colonPos+1 : slashPos]
+			projectName := project.Params.Repo[slashPos+1 : len(project.Params.Repo)-4]
+			fullName := strings.ToLower(fmt.Sprintf("%s-%s", gitUsername, projectName))
+
+			ci_manager.CiManager.StartCi(
+				project.Params.Env,
+				project.Params.Repo,
+				project.Params.FetchCodeKey,
+				gitUsername,
+				path.Join(global.GlobalConfig.SrcDir, gitUsername, projectName),
+				func() string {
+					if project.Config == nil {
+						return ""
+					} else {
+						return *project.Config
+					}
+				}(),
+				fullName,
+				project.Port,
+				project.Params.LokiUrl,
+				project.Params.DockerNetwork,
+			)
+			util.Alert(t.logger, fmt.Sprintf(`
+项目 <%s> 重新构建成功
+`, containerName))
 		}
 
 	}

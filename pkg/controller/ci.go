@@ -12,6 +12,7 @@ import (
 	i_core "github.com/pefish/go-interface/i-core"
 	t_error "github.com/pefish/go-interface/t-error"
 	t_mysql "github.com/pefish/go-interface/t-mysql"
+	go_mysql "github.com/pefish/go-mysql"
 	go_shell "github.com/pefish/go-shell"
 )
 
@@ -20,30 +21,14 @@ type CiControllerType struct {
 
 var CiController = CiControllerType{}
 
-type CiStartParams struct {
-	Env           string `json:"env" validate:"required"`
-	Repo          string `json:"repo" validate:"required"`
-	FetchCodeKey  string `json:"fetch_code_key" validate:"required"`
-	LokiUrl       string `json:"loki_url"`
-	DockerNetwork string `json:"docker_network"`
-}
-
 func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, *t_error.ErrorInfo) {
-	var params CiStartParams
+	var params db.CiParams
 	err := apiSession.ScanParams(&params)
 	if err != nil {
 		apiSession.Logger().ErrorF("Read params error. %+v", err)
 		return nil, t_error.INTERNAL_ERROR
 	}
 
-	atPos := strings.Index(params.Repo, "@")
-	if atPos == -1 {
-		util.Alert(
-			apiSession.Logger(),
-			fmt.Sprintf("[ERROR] error: --repo [%s] is illegal.", params.Repo),
-		)
-		return nil, t_error.WrapWithStr("Repo is illegal..")
-	}
 	colonPos := strings.Index(params.Repo, ":")
 	slashPos := strings.Index(params.Repo, "/")
 	gitUsername := params.Repo[colonPos+1 : slashPos]
@@ -72,6 +57,20 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 		)
 
 		return nil, t_error.WrapWithStr("Project disabled.")
+	}
+
+	_, err = global.MysqlInstance.Update(&t_mysql.UpdateParams{
+		TableName: "project",
+		Update: map[string]interface{}{
+			"params": params,
+		},
+		Where: map[string]interface{}{
+			"id": project.Id,
+		},
+	})
+	if err != nil && err != go_mysql.ErrorNoAffectedRows {
+		apiSession.Logger().Error(err)
+		return nil, t_error.INTERNAL_ERROR
 	}
 
 	go ci_manager.CiManager.StartCi(

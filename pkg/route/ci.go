@@ -2,6 +2,7 @@ package route
 
 import (
 	"github.com/pefish/ci-tool/pkg/controller"
+	"github.com/pefish/ci-tool/pkg/db"
 	"github.com/pefish/go-core/api"
 	"github.com/pefish/go-http/gorequest"
 )
@@ -10,7 +11,7 @@ var CiRoute = []*api.Api{
 	api.NewApi(&api.NewApiParamsType{
 		Path:           "/v1/ci-start",
 		Method:         gorequest.POST,
-		Params:         controller.CiStartParams{},
+		Params:         db.CiParams{},
 		ControllerFunc: controller.CiController.CiStart,
 	}),
 	api.NewApi(&api.NewApiParamsType{
