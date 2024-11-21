@@ -130,15 +130,13 @@ cd ${src}
 git config core.sshCommand "ssh -i `+fetchCodeKey+`"
 git reset --hard && git clean -d -f . && git pull && git checkout `+branch+` && git pull
 
-dockerBaseName="`+imageName+`"
-
-imageName="${dockerBaseName}:$(git rev-parse --short HEAD)"
+imageName="`+imageName+`:$(git rev-parse --short HEAD)"
 
 if [[ "$(sudo docker images -q ${imageName} 2> /dev/null)" == "" ]]; then
   sudo docker build --build-arg APP_ENV=`+env+` -t ${imageName} .
 fi
 
-containerName="${dockerBaseName}-`+env+`"
+containerName="`+fullName+`-`+env+`"
 
 sudo docker stop ${containerName} && sudo docker rm ${containerName}
 
