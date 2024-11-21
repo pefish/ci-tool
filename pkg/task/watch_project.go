@@ -146,6 +146,10 @@ func (t *WatchProject) Run(ctx context.Context) error {
 			gitUsername := project.Params.Repo[colonPos+1 : slashPos]
 			projectName := project.Params.Repo[slashPos+1 : len(project.Params.Repo)-4]
 			fullName := project.Name
+			imageName := project.Params.ImageName
+			if imageName == "" {
+				imageName = fullName
+			}
 
 			ci_manager.CiManager.StartCi(
 				project.Params.Env,
@@ -161,8 +165,8 @@ func (t *WatchProject) Run(ctx context.Context) error {
 					}
 				}(),
 				fullName,
+				imageName,
 				project.Port,
-				project.Params.LokiUrl,
 				project.Params.DockerNetwork,
 			)
 			util.Alert(t.logger, fmt.Sprintf(`

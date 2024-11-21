@@ -37,6 +37,10 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 	if fullName == "" {
 		fullName = strings.ToLower(fmt.Sprintf("%s-%s", gitUsername, projectName))
 	}
+	imageName := params.ImageName
+	if imageName == "" {
+		imageName = fullName
+	}
 
 	// 检查数据库中是否有这个项目
 	var project db.Project
@@ -90,8 +94,8 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 			}
 		}(),
 		fullName,
+		imageName,
 		project.Port,
-		params.LokiUrl,
 		params.DockerNetwork,
 	)
 

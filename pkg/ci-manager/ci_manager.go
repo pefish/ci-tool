@@ -43,8 +43,8 @@ func (c *CiManagerType) StartCi(
 	srcPath,
 	config,
 	fullName string,
+	imageName string,
 	port uint64,
-	lokiUrl string,
 	dockerNetwork string,
 ) {
 	c.logs.Delete(fullName)
@@ -58,8 +58,8 @@ func (c *CiManagerType) StartCi(
 		srcPath,
 		config,
 		fullName,
+		imageName,
 		port,
-		lokiUrl,
 		dockerNetwork,
 	)
 	if err != nil {
@@ -88,8 +88,8 @@ func (c *CiManagerType) startCi(
 	srcPath,
 	config,
 	fullName string,
+	imageName string,
 	port uint64,
-	lokiUrl string,
 	dockerNetwork string,
 ) error {
 
@@ -130,7 +130,7 @@ cd ${src}
 git config core.sshCommand "ssh -i `+fetchCodeKey+`"
 git reset --hard && git clean -d -f . && git pull && git checkout `+branch+` && git pull
 
-dockerBaseName="`+fullName+`"
+dockerBaseName="`+imageName+`"
 
 imageName="${dockerBaseName}:$(git rev-parse --short HEAD)"
 
@@ -147,7 +147,7 @@ TEMP_FILE=$(mktemp)
 
 echo "`+config+`" > "$TEMP_FILE"
 
-sudo docker run --name ${containerName} --env-file "$TEMP_FILE" -d %s%s%s ${imageName}
+sudo docker run --name ${containerName} --env-file "$TEMP_FILE" -d %s%s ${imageName}
 
 # 删除临时文件
 rm "$TEMP_FILE"
@@ -165,13 +165,6 @@ rm "$TEMP_FILE"
 				return ""
 			} else {
 				return fmt.Sprintf(" -p %d:8000", port)
-			}
-		}(),
-		func() string {
-			if lokiUrl == "" {
-				return ""
-			} else {
-				return fmt.Sprintf(` --log-driver=loki --log-opt loki-url="%s" --log-opt loki-retries=5 --log-opt loki-batch-size=400`, lokiUrl)
 			}
 		}(),
 		func() string {
