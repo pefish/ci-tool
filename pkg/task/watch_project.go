@@ -145,7 +145,7 @@ func (t *WatchProject) Run(ctx context.Context) error {
 			slashPos := strings.Index(project.Params.Repo, "/")
 			gitUsername := project.Params.Repo[colonPos+1 : slashPos]
 			projectName := project.Params.Repo[slashPos+1 : len(project.Params.Repo)-4]
-			fullName := strings.ToLower(fmt.Sprintf("%s-%s", gitUsername, projectName))
+			fullName := project.Name
 
 			ci_manager.CiManager.StartCi(
 				project.Params.Env,

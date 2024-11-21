@@ -33,7 +33,10 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 	slashPos := strings.Index(params.Repo, "/")
 	gitUsername := params.Repo[colonPos+1 : slashPos]
 	projectName := params.Repo[slashPos+1 : len(params.Repo)-4]
-	fullName := strings.ToLower(fmt.Sprintf("%s-%s", gitUsername, projectName))
+	fullName := params.Name
+	if fullName == "" {
+		fullName = strings.ToLower(fmt.Sprintf("%s-%s", gitUsername, projectName))
+	}
 
 	// 检查数据库中是否有这个项目
 	var project db.Project

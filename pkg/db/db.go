@@ -15,6 +15,7 @@ type IdType struct {
 
 type CiParams struct {
 	Env           string `json:"env" validate:"required"`
+	Name          string `json:"name"`
 	Repo          string `json:"repo" validate:"required"`
 	FetchCodeKey  string `json:"fetch_code_key" validate:"required"`
 	LokiUrl       string `json:"loki_url"`
