@@ -7,7 +7,7 @@ require (
 	github.com/pefish/go-core v1.5.2
 	github.com/pefish/go-file v0.2.9
 	github.com/pefish/go-format v0.5.1
-	github.com/pefish/go-http v0.8.6
+	github.com/pefish/go-http v0.8.7
 	github.com/pefish/go-interface v0.1.3
 	github.com/pefish/go-mysql v1.7.5
 	github.com/pefish/go-shell v0.1.3

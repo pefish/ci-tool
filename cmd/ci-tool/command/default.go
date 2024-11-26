@@ -67,7 +67,6 @@ func (dc *DefaultCommand) Init(command *commander.Commander) error {
 }
 
 func (dc *DefaultCommand) Start(command *commander.Commander) error {
-
 	taskDriver := task_driver.NewTaskDriver()
 	taskDriver.Register(service.Service)
 	taskDriver.Register(task.NewWatchContainer(command.Logger))
