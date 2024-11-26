@@ -3,12 +3,17 @@ package ci_manager
 import (
 	"fmt"
 	"os/exec"
+	"path"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/pefish/ci-tool/pkg/global"
 	"github.com/pefish/ci-tool/pkg/util"
+	go_file "github.com/pefish/go-file"
 	i_logger "github.com/pefish/go-interface/i-logger"
 	go_shell "github.com/pefish/go-shell"
+	go_time "github.com/pefish/go-time"
 	"github.com/pkg/errors"
 )
 
@@ -106,6 +111,16 @@ func (c *CiManagerType) startCi(
 		srcPath = "${HOME}" + srcPath[1:]
 	}
 
+	if _, ok := global.GlobalData.StartLogTime[fullName]; !ok {
+		global.GlobalData.StartLogTime[fullName] = time.Now()
+	}
+
+	logsPath := path.Join(global.Command.DataDir, "logs", fullName)
+	err := go_file.AssertPathExist(logsPath)
+	if err != nil {
+		return err
+	}
+
 	script := fmt.Sprintf(
 		`
 #!/bin/bash
@@ -138,7 +153,21 @@ fi
 
 containerName="`+fullName+`-`+env+`"
 
-sudo docker stop ${containerName} && sudo docker rm ${containerName}
+sudo docker stop ${containerName}
+
+containerId=$(docker inspect ${containerName} | grep '"Id"' | head -1 | awk -F '"' '{print $4}')
+
+logPath="/var/lib/docker/containers/$containerId/${containerId}-json.log"
+
+backupLogDir="`+logsPath+`"
+
+sudo cat ${logPath} >> ${backupLogDir}/current.log
+
+echo "日志已备份到 $backupLogDir"
+
+%s
+
+sudo docker rm ${containerName}
 
 # 创建一个临时文件
 TEMP_FILE=$(mktemp)
@@ -156,6 +185,23 @@ rm "$TEMP_FILE"
 				return ""
 			} else {
 				return fmt.Sprintf(` --config core.sshCommand="ssh -i %s"`, fetchCodeKey)
+			}
+		}(),
+		func() string {
+			if time.Since(global.GlobalData.StartLogTime[fullName]) > 10*24*time.Hour {
+				now := time.Now()
+				global.GlobalData.StartLogTime[fullName] = now
+				return fmt.Sprintf(
+					`
+mv ${backupLogDir}/current.log ${backupLogDir}/%s_%s.log
+
+echo "日志已打包"
+`,
+					go_time.TimeToStr(global.GlobalData.StartLogTime[fullName], "0000-00-00 00:00:00"),
+					go_time.TimeToStr(now, "0000-00-00 00:00:00"),
+				)
+			} else {
+				return ""
 			}
 		}(),
 		func() string {
@@ -190,7 +236,7 @@ rm "$TEMP_FILE"
 			}
 		}
 	}()
-	err := go_shell.ExecForResultLineByLine(cmd, resultChan)
+	err = go_shell.ExecForResultLineByLine(cmd, resultChan)
 	if err != nil {
 		return err
 	}

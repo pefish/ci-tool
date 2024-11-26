@@ -3,6 +3,7 @@ package global
 import (
 	"time"
 
+	"github.com/pefish/go-commander"
 	go_mysql "github.com/pefish/go-mysql"
 )
 
@@ -23,13 +24,16 @@ type Config struct {
 type Data struct {
 	DeadProjects   []string             `json:"dead_projects"`
 	LastNotifyTime map[string]time.Time `json:"last_notify_time"`
+	StartLogTime   map[string]time.Time `json:"start_log_time"`
 }
 
 var GlobalConfig Config
+var Command *commander.Commander
 
-var GlobalData Data = Data{
+var GlobalData = Data{
 	DeadProjects:   make([]string, 0),
 	LastNotifyTime: make(map[string]time.Time, 0),
+	StartLogTime:   make(map[string]time.Time, 0),
 }
 
 var MysqlInstance *go_mysql.MysqlType

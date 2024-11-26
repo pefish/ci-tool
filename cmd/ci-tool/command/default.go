@@ -37,6 +37,7 @@ func (dc *DefaultCommand) OnExited(command *commander.Commander) error {
 }
 
 func (dc *DefaultCommand) Init(command *commander.Commander) error {
+	global.Command = command
 
 	global.MysqlInstance = go_mysql.NewMysqlInstance(command.Logger)
 	err := global.MysqlInstance.ConnectWithConfiguration(t_mysql.Configuration{
