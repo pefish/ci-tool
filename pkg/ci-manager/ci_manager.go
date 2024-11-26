@@ -155,7 +155,7 @@ containerName="`+fullName+`-`+env+`"
 
 sudo docker stop ${containerName}
 
-containerId=$(docker inspect ${containerName} | grep '"Id"' | head -1 | awk -F '"' '{print $4}')
+containerId=$(sudo docker inspect ${containerName} | grep '"Id"' | head -1 | awk -F '"' '{print $4}')
 
 logPath="/var/lib/docker/containers/$containerId/${containerId}-json.log"
 
