@@ -69,7 +69,7 @@ func (c *CiManagerType) StartCi(
 	)
 	if err != nil {
 		c.logs.Store(fullName, err.Error())
-		util.Alert(
+		util.AlertNoError(
 			c.logger,
 			fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。\n%+v", fullName, env, err),
 		)
@@ -77,10 +77,13 @@ func (c *CiManagerType) StartCi(
 		return
 	}
 
-	util.Alert(
+	err = util.Alert(
 		c.logger,
 		fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", fullName, env),
 	)
+	if err != nil {
+		logger.ErrorF("<%s> 发送通知失败!!! %+v", fullName, err)
+	}
 
 	logger.InfoF("<%s> done!!!", fullName)
 }

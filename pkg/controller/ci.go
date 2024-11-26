@@ -58,7 +58,7 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 		return nil, t_error.INTERNAL_ERROR
 	}
 	if notFound {
-		util.Alert(
+		util.AlertNoError(
 			apiSession.Logger(),
 			fmt.Sprintf("[ERROR] <%s> CI 被禁用。", fullName),
 		)

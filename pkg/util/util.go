@@ -13,6 +13,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+func AlertNoError(logger i_logger.ILogger, msg string) {
+	err := Alert(logger, msg)
+	if err != nil {
+		logger.ErrorF("发送通知失败!!! %+v", err)
+	}
+}
+
 func Alert(logger i_logger.ILogger, msg string) error {
 	switch global.GlobalConfig.AlertType {
 	case "weixin":

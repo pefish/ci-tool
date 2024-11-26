@@ -51,11 +51,11 @@ func (t *WatchProject) Run(ctx context.Context) error {
 		if project.Start == 1 {
 			err = util.StartContainer(t.logger, containerName)
 			if err != nil {
-				util.Alert(t.logger, fmt.Sprintf(`
+				util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 启动失败 (%s)
 				`, containerName, err.Error()))
 			} else {
-				util.Alert(t.logger, fmt.Sprintf(`
+				util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 启动成功
 				`, containerName))
 			}
@@ -75,11 +75,11 @@ func (t *WatchProject) Run(ctx context.Context) error {
 		if project.Stop == 1 {
 			err = util.StopContainer(t.logger, containerName)
 			if err != nil {
-				util.Alert(t.logger, fmt.Sprintf(`
+				util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 停止失败 (%s)
 				`, containerName, err.Error()))
 			} else {
-				util.Alert(t.logger, fmt.Sprintf(`
+				util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 停止成功
 				`, containerName))
 			}
@@ -100,11 +100,11 @@ func (t *WatchProject) Run(ctx context.Context) error {
 		if project.Restart == 1 {
 			err = util.RestartContainer(t.logger, containerName)
 			if err != nil {
-				util.Alert(t.logger, fmt.Sprintf(`
+				util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 重启失败 (%s)
 				`, containerName, err.Error()))
 			} else {
-				util.Alert(t.logger, fmt.Sprintf(`
+				util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 重启成功
 				`, containerName))
 			}
@@ -135,7 +135,7 @@ func (t *WatchProject) Run(ctx context.Context) error {
 			)
 
 			if project.Params == nil {
-				util.Alert(t.logger, fmt.Sprintf(`
+				util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 重新构建失败 (没有 params)
 				`, containerName))
 				continue
@@ -169,7 +169,7 @@ func (t *WatchProject) Run(ctx context.Context) error {
 				project.Port,
 				project.Params.DockerNetwork,
 			)
-			util.Alert(t.logger, fmt.Sprintf(`
+			util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 重新构建成功
 `, containerName))
 		}

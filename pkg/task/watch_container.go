@@ -85,7 +85,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 				global.GlobalData.DeadProjects = slices.DeleteFunc(global.GlobalData.DeadProjects, func(containerName_ string) bool {
 					return containerName_ == containerName
 				})
-				util.Alert(t.logger, fmt.Sprintf(`
+				util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 已复活
 `, containerName))
 			}
@@ -122,7 +122,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 				if err != nil {
 					return err
 				}
-				util.Alert(t.logger, fmt.Sprintf(`
+				util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 已重启，请关注错误信息
 `, containerName))
 			}
@@ -135,7 +135,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 		}
 
 		// 警报
-		util.Alert(t.logger, fmt.Sprintf(`
+		util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 意外终止，请检查
 `, containerName))
 		global.GlobalData.LastNotifyTime[containerName] = time.Now()
