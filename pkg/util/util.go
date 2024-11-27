@@ -150,7 +150,7 @@ sudo docker stop "${container_name}"
 	if err != nil {
 		return err
 	}
-	if strings.Contains(result, "Error") {
+	if strings.Contains(result, "ERROR") {
 		return errors.New(result)
 	}
 	return nil
@@ -176,7 +176,7 @@ sudo docker restart "${container_name}"
 	if err != nil {
 		return err
 	}
-	if strings.Contains(result, "Error") {
+	if strings.Contains(result, "ERROR") {
 		return errors.New(result)
 	}
 	return nil
