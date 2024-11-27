@@ -156,21 +156,25 @@ fi
 
 containerName="`+fullName+`-`+env+`"
 
-sudo docker stop ${containerName}
+# 检查容器是否存在
+if sudo docker ps -a --filter "name=^${containerName}$" --format '{{.Names}}' | grep -q "^${containerName}$"; then
+	sudo docker stop ${containerName}
 
-containerId=$(sudo docker inspect ${containerName} | grep '"Id"' | head -1 | awk -F '"' '{print $4}')
+	containerId=$(sudo docker inspect ${containerName} | grep '"Id"' | head -1 | awk -F '"' '{print $4}')
 
-logPath="/var/lib/docker/containers/$containerId/${containerId}-json.log"
+	logPath="/var/lib/docker/containers/$containerId/${containerId}-json.log"
 
-backupLogDir="`+logsPath+`"
+	backupLogDir="`+logsPath+`"
 
-sudo cat ${logPath} >> ${backupLogDir}/current.log
+	sudo cat ${logPath} >> ${backupLogDir}/current.log
 
-echo "日志已备份到 $backupLogDir"
+	echo "日志已备份到 $backupLogDir"
 
-%s
+	%s
 
-sudo docker rm ${containerName}
+	sudo docker rm ${containerName}
+fi
+
 
 # 创建一个临时文件
 TEMP_FILE=$(mktemp)

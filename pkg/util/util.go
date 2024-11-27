@@ -67,31 +67,85 @@ func Alert(logger i_logger.ILogger, msg string) error {
 }
 
 func FetchErrorMsgFromContainer(logger i_logger.ILogger, containerName string) (string, error) {
-	cmd := go_shell.NewCmd("sudo docker logs %s --tail 200", containerName)
-	logger.DebugF("Exec shell: <%s>", cmd.String())
+	cmd := go_shell.NewCmd(`
+#!/bin/bash
+	
+# 要检查的容器名称
+container_name="%s"
+
+# 检查容器是否存在
+if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
+    echo "ERROR: container not exist"
+	exit 1
+fi
+
+sudo docker logs "${container_name}" --tail 200
+		
+	`, containerName)
 	result, err := go_shell.ExecForResult(cmd)
 	if err != nil {
 		return "", err
+	}
+	if strings.Contains(result, "ERROR") {
+		return "", errors.New(result)
 	}
 	return result, nil
 }
 
 func StartContainer(logger i_logger.ILogger, containerName string) error {
-	cmd := go_shell.NewCmd("sudo docker start %s", containerName)
-	logger.DebugF("Exec shell: <%s>", cmd.String())
+	cmd := go_shell.NewCmd(`
+#!/bin/bash
+
+# 要检查的容器名称
+container_name="%s"
+
+# 检查容器是否存在
+if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
+    echo "ERROR: container not exist"
+	exit 1
+fi
+
+# 检查容器是否存在且正在运行
+if sudo docker ps --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
+    echo "ERROR: running already"
+    exit 1
+fi
+
+sudo docker start "${container_name}"
+	
+`, containerName)
 	result, err := go_shell.ExecForResult(cmd)
 	if err != nil {
 		return err
 	}
-	if strings.Contains(result, "Error") {
+	if strings.Contains(result, "ERROR") {
 		return errors.New(result)
 	}
 	return nil
 }
 
 func StopContainer(logger i_logger.ILogger, containerName string) error {
-	cmd := go_shell.NewCmd("sudo docker stop %s", containerName)
-	logger.DebugF("Exec shell: <%s>", cmd.String())
+	cmd := go_shell.NewCmd(`
+#!/bin/bash
+
+# 要检查的容器名称
+container_name="%s"
+
+# 检查容器是否存在
+if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
+	echo "ERROR: container not exist"
+	exit 1
+fi
+	
+# 检查容器是否存在且处于停止状态
+if docker ps -a --filter "name=^${container_name}$" --filter "status=exited" --format '{{.Names}}' | grep -q "^${container_name}$"; then
+    echo "ERROR: stopped already"
+    exit 1
+fi
+	
+sudo docker stop "${container_name}"
+		
+	`, containerName)
 	result, err := go_shell.ExecForResult(cmd)
 	if err != nil {
 		return err
@@ -103,8 +157,21 @@ func StopContainer(logger i_logger.ILogger, containerName string) error {
 }
 
 func RestartContainer(logger i_logger.ILogger, containerName string) error {
-	cmd := go_shell.NewCmd("sudo docker restart %s", containerName)
-	logger.DebugF("Exec shell: <%s>", cmd.String())
+	cmd := go_shell.NewCmd(`
+#!/bin/bash
+
+# 要检查的容器名称
+container_name="%s"
+
+# 检查容器是否存在
+if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
+	echo "ERROR: container not exist"
+	exit 1
+fi
+	
+sudo docker restart "${container_name}"
+		
+`, containerName)
 	result, err := go_shell.ExecForResult(cmd)
 	if err != nil {
 		return err
