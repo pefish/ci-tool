@@ -76,7 +76,7 @@ container_name="%s"
 # 检查容器是否存在
 if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
     echo "ERROR: container not exist"
-	exit 1
+	exit 0
 fi
 
 sudo docker logs "${container_name}" --tail 200
@@ -102,13 +102,13 @@ container_name="%s"
 # 检查容器是否存在
 if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
     echo "ERROR: container not exist"
-	exit 1
+	exit 0
 fi
 
 # 检查容器是否存在且正在运行
 if sudo docker ps --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
     echo "ERROR: running already"
-    exit 1
+    exit 0
 fi
 
 sudo docker start "${container_name}"
@@ -134,13 +134,13 @@ container_name="%s"
 # 检查容器是否存在
 if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
 	echo "ERROR: container not exist"
-	exit 1
+	exit 0
 fi
 	
 # 检查容器是否存在且处于停止状态
 if docker ps -a --filter "name=^${container_name}$" --filter "status=exited" --format '{{.Names}}' | grep -q "^${container_name}$"; then
     echo "ERROR: stopped already"
-    exit 1
+    exit 0
 fi
 	
 sudo docker stop "${container_name}"
@@ -166,7 +166,7 @@ container_name="%s"
 # 检查容器是否存在
 if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
 	echo "ERROR: container not exist"
-	exit 1
+	exit 0
 fi
 	
 sudo docker restart "${container_name}"
