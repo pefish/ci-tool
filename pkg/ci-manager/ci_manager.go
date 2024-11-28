@@ -172,7 +172,17 @@ if sudo docker ps -a --filter "name=^${containerName}$" --format '{{.Names}}' | 
 
 	%s
 
+	imageId=$(sudo docker inspect "$containerName" --format '{{.Image}}')
+
 	sudo docker rm ${containerName}
+
+	# 删除镜像（如果失败，脚本继续运行）
+	if [ -n "$imageId" ]; then
+		echo "Deleting image: $imageId"
+		sudo docker rmi "$imageId" || echo "Failed to delete image $imageId, continuing..."
+	else
+		echo "No image ID found for container: $containerName"
+	fi
 fi
 
 
