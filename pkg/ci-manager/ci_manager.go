@@ -168,7 +168,7 @@ func (c *CiManagerType) startCi(
 	}
 	logger.Info("构建镜像完成.")
 
-	if project.Image == nil || project.Image.Last2 != "" {
+	if project.Image != nil && project.Image.Last2 != "" {
 		logger.InfoF("开始删除镜像 <%s>...", project.Image.Last2)
 		err = util.RemoveImage(resultChan, project.Image.Last2)
 		if err != nil {
