@@ -76,7 +76,7 @@ container_name="%s"
 
 # 检查容器是否存在
 if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
-    echo "ERROR: container not exist"
+    echo "ERROR<CI-TOOL>: container not exist"
 	exit 0
 fi
 
@@ -87,7 +87,7 @@ sudo docker logs "${container_name}" --tail 200
 	if err != nil {
 		return "", err
 	}
-	if strings.Contains(result, "ERROR") {
+	if strings.Contains(result, "ERROR<CI-TOOL>") {
 		return "", errors.New(result)
 	}
 	return result, nil
@@ -102,13 +102,13 @@ container_name="%s"
 
 # 检查容器是否存在
 if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
-    echo "ERROR: container not exist"
+    echo "ERROR<CI-TOOL>: container not exist"
 	exit 0
 fi
 
 # 检查容器是否存在且正在运行
 if sudo docker ps --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
-    echo "ERROR: running already"
+    echo "ERROR<CI-TOOL>: running already"
     exit 0
 fi
 
@@ -119,7 +119,7 @@ sudo docker start "${container_name}"
 	if err != nil {
 		return err
 	}
-	if strings.Contains(result, "ERROR") {
+	if strings.Contains(result, "ERROR<CI-TOOL>") {
 		return errors.New(result)
 	}
 	return nil
@@ -134,13 +134,13 @@ container_name="%s"
 
 # 检查容器是否存在
 if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
-	echo "ERROR: container not exist"
+	echo "ERROR<CI-TOOL>: container not exist"
 	exit 0
 fi
 	
 # 检查容器是否存在且处于停止状态
 if docker ps -a --filter "name=^${container_name}$" --filter "status=exited" --format '{{.Names}}' | grep -q "^${container_name}$"; then
-    echo "ERROR: stopped already"
+    echo "ERROR<CI-TOOL>: stopped already"
     exit 0
 fi
 	
@@ -151,7 +151,7 @@ sudo docker stop "${container_name}"
 	if err != nil {
 		return err
 	}
-	if strings.Contains(result, "ERROR") {
+	if strings.Contains(result, "ERROR<CI-TOOL>") {
 		return errors.New(result)
 	}
 	return nil
@@ -166,7 +166,7 @@ container_name="%s"
 
 # 检查容器是否存在
 if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
-	echo "ERROR: container not exist"
+	echo "ERROR<CI-TOOL>: container not exist"
 	exit 0
 fi
 	
@@ -177,7 +177,7 @@ sudo docker restart "${container_name}"
 	if err != nil {
 		return err
 	}
-	if strings.Contains(result, "ERROR") {
+	if strings.Contains(result, "ERROR<CI-TOOL>") {
 		return errors.New(result)
 	}
 	return nil
@@ -358,7 +358,7 @@ logPath="/var/lib/docker/containers/${containerId}/${containerId}-json.log"
 
 sudo cat ${logPath} >> `+logsPath+`/current.log
 
-echo "日志已备"
+echo "日志已备份"
 `,
 	), resultChan)
 	if err != nil {

@@ -204,21 +204,21 @@ func (c *CiManagerType) startCi(
 		}
 		logger.Info("备份容器日志完成.")
 
-	} else {
-		logger.InfoF("开始启动容器 <%s>...", containerName)
-		err = util.StartNewContainer(
-			resultChan,
-			imageName,
-			envConfig,
-			project.Port,
-			project.Params.DockerNetwork,
-			containerName,
-		)
-		if err != nil {
-			return err
-		}
-		logger.Info("启动容器完成.")
 	}
+
+	logger.InfoF("开始启动容器 <%s>...", containerName)
+	err = util.StartNewContainer(
+		resultChan,
+		imageName,
+		envConfig,
+		project.Port,
+		project.Params.DockerNetwork,
+		containerName,
+	)
+	if err != nil {
+		return err
+	}
+	logger.Info("启动容器完成.")
 
 	newImageInfo := db.ImageInfo{
 		Now: imageName,
