@@ -22,5 +22,7 @@ func TestContainerExists(t *testing.T) {
 func TestListProjectContainers(t *testing.T) {
 	r, err := ListProjectContainers("redis")
 	go_test_.Equal(t, nil, err)
-	fmt.Println(r)
+	for _, a := range r {
+		fmt.Println(a)
+	}
 }

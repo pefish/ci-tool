@@ -347,7 +347,7 @@ echo $(sudo docker ps -a --filter "name=%s" --format '{{.Names}}')
 	}
 	r = strings.TrimSuffix(r, "\n")
 
-	return strings.Split(r, "\n"), nil
+	return strings.Split(r, " "), nil
 }
 
 func StartNewContainer(
