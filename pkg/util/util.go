@@ -157,6 +157,37 @@ sudo docker stop "${container_name}"
 	return nil
 }
 
+func RemoveContainer(containerName string) error {
+	cmd := go_shell.NewCmd(`
+#!/bin/bash
+
+# 要检查的容器名称
+container_name="%s"
+
+# 检查容器是否存在
+if ! sudo docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -q "^${container_name}$"; then
+	echo "ERROR<CI-TOOL>: container not exist"
+	exit 0
+fi
+	
+# 检查容器是否存在且处于运行状态
+if docker ps -a --filter "name=^${container_name}$" --filter "status=running" --format '{{.Names}}' | grep -q "^${container_name}$"; then
+    sudo docker stop "${container_name}"
+fi
+
+sudo docker rm "${container_name}"
+		
+	`, containerName)
+	result, err := go_shell.ExecForResult(cmd)
+	if err != nil {
+		return err
+	}
+	if strings.Contains(result, "ERROR<CI-TOOL>") {
+		return errors.New(result)
+	}
+	return nil
+}
+
 func RestartContainer(containerName string) error {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
@@ -394,8 +425,6 @@ func RemoveImage(
 set -euxo pipefail
 
 imageId=$(sudo docker inspect `+containerName+` --format '{{.Image}}')
-
-sudo docker rm `+containerName+`
 
 # 删除老的镜像（如果失败，脚本继续运行）
 if [ -n "$imageId" ]; then

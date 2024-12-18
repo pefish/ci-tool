@@ -183,12 +183,12 @@ func (c *CiManagerType) startCi(
 		return err
 	}
 	if containerExists {
-		logger.InfoF("开始停止容器 <%s>...", containerName)
-		err = util.StopContainer(containerName)
+		logger.InfoF("开始停止并删除容器 <%s>...", containerName)
+		err = util.RemoveContainer(containerName)
 		if err != nil {
 			return err
 		}
-		logger.Info("停止容器完成.")
+		logger.Info("停止并删除容器完成.")
 		logger.InfoF("开始备份容器 <%s> 日志...", containerName)
 		isPacked, err := util.BackupContainerLog(
 			resultChan,
