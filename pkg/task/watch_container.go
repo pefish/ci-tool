@@ -49,9 +49,6 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 			ports := strings.Split(project.Port, ",")
 			for i := range ports {
 				containerName := fmt.Sprintf("%s-prod%d", project.Name, i)
-				if len(ports) == 1 {
-					containerName = fmt.Sprintf("%s-prod", project.Name)
-				}
 				if strings.EqualFold(containerName, deadProject) && project.Status == 1 {
 					shouldCheck = true
 					break
@@ -78,9 +75,6 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 		ports := strings.Split(project.Port, ",")
 		for i := range ports {
 			containerName := fmt.Sprintf("%s-prod%d", project.Name, i)
-			if len(ports) == 1 {
-				containerName = fmt.Sprintf("%s-prod", project.Name)
-			}
 			if project.Status == 0 {
 				continue
 			}

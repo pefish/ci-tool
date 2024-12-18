@@ -177,87 +177,47 @@ func (c *CiManagerType) startCi(
 		logger.Info("删除镜像完成.")
 	}
 
-	ports := strings.Split(project.Port, ",")
-	// 如果是多实例，则检查没有序号的容器存不存在，存在就删除
-	if len(ports) > 1 {
-		containerName := fmt.Sprintf("%s-%s", fullName, project.Params.Env)
-		containerExists, err := util.ContainerExists(containerName)
+	// 删除每一个容器
+	containerNames, err := util.ListProjectContainers(fullName)
+	if err != nil {
+		return err
+	}
+	for _, containerName := range containerNames {
+		logger.InfoF("开始停止容器 <%s>...", containerName)
+		err = util.StopContainer(containerName)
 		if err != nil {
 			return err
 		}
-		if containerExists {
-			logger.InfoF("开始停止容器 <%s>...", containerName)
-			err = util.StopContainer(containerName)
-			if err != nil {
-				return err
-			}
-			logger.Info("停止容器完成.")
+		logger.Info("停止容器完成.")
 
-			logger.InfoF("开始备份容器 <%s> 日志...", containerName)
-			isPacked, err := util.BackupContainerLog(
-				resultChan,
-				logsPath,
-				containerName,
-				global.GlobalData.StartLogTime[fullName],
-			)
-			if err != nil {
-				return err
-			}
-			if isPacked {
-				global.GlobalData.StartLogTime[fullName] = time.Now()
-			}
-			logger.Info("备份容器日志完成.")
-
-			logger.InfoF("开始删除容器 <%s>...", containerName)
-			err = util.RemoveContainer(containerName)
-			if err != nil {
-				return err
-			}
-			logger.Info("删除容器完成.")
+		logger.InfoF("开始备份容器 <%s> 日志...", containerName)
+		isPacked, err := util.BackupContainerLog(
+			resultChan,
+			logsPath,
+			containerName,
+			global.GlobalData.StartLogTime[fullName],
+		)
+		if err != nil {
+			return err
 		}
+		if isPacked {
+			global.GlobalData.StartLogTime[fullName] = time.Now()
+		}
+		logger.Info("备份容器日志完成.")
+
+		logger.InfoF("开始删除容器 <%s>...", containerName)
+		err = util.RemoveContainer(containerName)
+		if err != nil {
+			return err
+		}
+		logger.Info("删除容器完成.")
 	}
+
+	ports := strings.Split(project.Port, ",")
 	for i, portStr := range ports {
 		port, _ := go_format.ToUint64(portStr)
 
 		containerName := fmt.Sprintf("%s-%s%d", fullName, project.Params.Env, i)
-		if len(ports) == 1 {
-			containerName = fmt.Sprintf("%s-%s", fullName, project.Params.Env)
-		}
-		containerExists, err := util.ContainerExists(containerName)
-		if err != nil {
-			return err
-		}
-		if containerExists {
-			logger.InfoF("开始停止容器 <%s>...", containerName)
-			err = util.StopContainer(containerName)
-			if err != nil {
-				return err
-			}
-			logger.Info("停止容器完成.")
-
-			logger.InfoF("开始备份容器 <%s> 日志...", containerName)
-			isPacked, err := util.BackupContainerLog(
-				resultChan,
-				logsPath,
-				containerName,
-				global.GlobalData.StartLogTime[fullName],
-			)
-			if err != nil {
-				return err
-			}
-			if isPacked {
-				global.GlobalData.StartLogTime[fullName] = time.Now()
-			}
-			logger.Info("备份容器日志完成.")
-
-			logger.InfoF("开始删除容器 <%s>...", containerName)
-			err = util.RemoveContainer(containerName)
-			if err != nil {
-				return err
-			}
-			logger.Info("删除容器完成.")
-		}
-
 		logger.InfoF("开始启动容器 <%s>...", containerName)
 		err = util.StartNewContainer(
 			resultChan,

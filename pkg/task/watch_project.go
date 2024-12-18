@@ -46,9 +46,6 @@ func (t *WatchProject) Run(ctx context.Context) error {
 		ports := strings.Split(project.Port, ",")
 		for i := range ports {
 			containerName := fmt.Sprintf("%s-prod%d", project.Name, i)
-			if len(ports) == 1 {
-				containerName = fmt.Sprintf("%s-prod", project.Name)
-			}
 			if project.Status == 0 {
 				continue
 			}

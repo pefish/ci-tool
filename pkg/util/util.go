@@ -333,6 +333,23 @@ echo 0
 	return r == "1\n", nil
 }
 
+func ListProjectContainers(fullName string) ([]string, error) {
+	r, err := go_shell.ExecForResult(go_shell.NewCmd(
+		`
+#!/bin/bash
+
+echo $(sudo docker ps -a --filter "name=%s" --format '{{.Names}}')
+`,
+		fullName,
+	))
+	if err != nil {
+		return nil, err
+	}
+	r = strings.TrimSuffix(r, "\n")
+
+	return strings.Split(r, "\n"), nil
+}
+
 func StartNewContainer(
 	resultChan chan string,
 	imageName string,
