@@ -220,6 +220,9 @@ func (c *CiManagerType) startCi(
 		port, _ := go_format.ToUint64(portStr)
 
 		containerName := fmt.Sprintf("%s-%s%d", fullName, project.Params.Env, i)
+		if len(ports) == 1 {
+			containerName = fmt.Sprintf("%s-%s", fullName, project.Params.Env)
+		}
 		containerExists, err := util.ContainerExists(containerName)
 		if err != nil {
 			return err
