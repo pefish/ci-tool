@@ -227,24 +227,26 @@ func (c *CiManagerType) startCi(
 	}
 	logger.Info("启动容器完成.")
 
-	newImageInfo := db.ImageInfo{
-		Now: imageName,
+	if project.Image == nil || project.Image.Now != imageName {
+		newImageInfo := db.ImageInfo{
+			Now: imageName,
+		}
+		if project.Image != nil && project.Image.Now != "" {
+			newImageInfo.Last1 = project.Image.Now
+		}
+		if project.Image != nil && project.Image.Last1 != "" {
+			newImageInfo.Last2 = project.Image.Last1
+		}
+		global.MysqlInstance.Update(&t_mysql.UpdateParams{
+			TableName: "project",
+			Update: map[string]interface{}{
+				"image": newImageInfo,
+			},
+			Where: map[string]interface{}{
+				"id": project.Id,
+			},
+		})
 	}
-	if project.Image != nil && project.Image.Now != "" {
-		newImageInfo.Last1 = project.Image.Now
-	}
-	if project.Image != nil && project.Image.Last1 != "" {
-		newImageInfo.Last2 = project.Image.Last1
-	}
-	global.MysqlInstance.Update(&t_mysql.UpdateParams{
-		TableName: "project",
-		Update: map[string]interface{}{
-			"image": newImageInfo,
-		},
-		Where: map[string]interface{}{
-			"id": project.Id,
-		},
-	})
 
 	return nil
 }
