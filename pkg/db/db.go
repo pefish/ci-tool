@@ -21,9 +21,10 @@ type CiParams struct {
 }
 
 type ImageInfo struct {
-	Now   string `json:"now"`
-	Last1 string `json:"last1"`
-	Last2 string `json:"last2"`
+	Now    string `json:"now"`
+	Last1  string `json:"last1"`
+	Last2  string `json:"last2"`
+	Should string `json:"should"`
 }
 
 type Project struct {

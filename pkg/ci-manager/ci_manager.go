@@ -146,29 +146,28 @@ func (c *CiManagerType) startCi(
 	}
 
 	imageName := ""
-	if project.Image == nil || project.Image.Now == "" {
+	if project.Image != nil && project.Image.Should != "" {
+		imageName = project.Image.Should
+	} else {
 		shortCommitHash, err := util.GetGitShortCommitHash(srcPath)
 		if err != nil {
 			return err
 		}
 		imageName = fmt.Sprintf("%s:%s", fullName, shortCommitHash)
-	} else {
-		imageName = project.Image.Now
+		logger.InfoF("开始构建镜像 <%s>...", imageName)
+		err = util.BuildImage(
+			resultChan,
+			srcPath,
+			project.Params.Env,
+			imageName,
+		)
+		if err != nil {
+			return err
+		}
+		logger.Info("构建镜像完成.")
 	}
 
-	logger.InfoF("开始构建镜像 <%s>...", imageName)
-	err = util.BuildImage(
-		resultChan,
-		srcPath,
-		project.Params.Env,
-		imageName,
-	)
-	if err != nil {
-		return err
-	}
-	logger.Info("构建镜像完成.")
-
-	if project.Image != nil && project.Image.Last2 != "" {
+	if project.Image != nil && project.Image.Last2 != "" && project.Image.Last2 != project.Image.Now {
 		logger.InfoF("开始删除镜像 <%s>...", project.Image.Last2)
 		err = util.RemoveImage(resultChan, project.Image.Last2)
 		if err != nil {
@@ -227,26 +226,24 @@ func (c *CiManagerType) startCi(
 	}
 	logger.Info("启动容器完成.")
 
-	if project.Image == nil || project.Image.Now != imageName {
-		newImageInfo := db.ImageInfo{
-			Now: imageName,
-		}
-		if project.Image != nil && project.Image.Now != "" {
-			newImageInfo.Last1 = project.Image.Now
-		}
-		if project.Image != nil && project.Image.Last1 != "" {
-			newImageInfo.Last2 = project.Image.Last1
-		}
-		global.MysqlInstance.Update(&t_mysql.UpdateParams{
-			TableName: "project",
-			Update: map[string]interface{}{
-				"image": newImageInfo,
-			},
-			Where: map[string]interface{}{
-				"id": project.Id,
-			},
-		})
+	newImageInfo := db.ImageInfo{
+		Now: imageName,
 	}
+	if project.Image != nil && project.Image.Now != "" {
+		newImageInfo.Last1 = project.Image.Now
+	}
+	if project.Image != nil && project.Image.Last1 != "" {
+		newImageInfo.Last2 = project.Image.Last1
+	}
+	global.MysqlInstance.Update(&t_mysql.UpdateParams{
+		TableName: "project",
+		Update: map[string]interface{}{
+			"image": newImageInfo,
+		},
+		Where: map[string]interface{}{
+			"id": project.Id,
+		},
+	})
 
 	return nil
 }
