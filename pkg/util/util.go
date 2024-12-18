@@ -260,6 +260,7 @@ git reset --hard && git clean -d -f . && git pull && git checkout `+branch+` && 
 
 func BuildImage(
 	resultChan chan string,
+	srcPath string,
 	env string,
 	imageName string,
 ) error {
@@ -267,6 +268,8 @@ func BuildImage(
 		`
 #!/bin/bash
 set -euxo pipefail
+
+cd `+srcPath+`
 
 if [[ "$(sudo docker images -q `+imageName+` 2> /dev/null)" == "" ]]; then
   sudo docker build --build-arg APP_ENV=`+env+` -t `+imageName+` .

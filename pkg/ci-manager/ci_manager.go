@@ -120,7 +120,7 @@ func (c *CiManagerType) startCi(
 		srcPath = "${HOME}" + srcPath[1:]
 	}
 
-	c.logger.Info("开始 pull 代码...")
+	logger.Info("开始 pull 代码...")
 
 	err := util.GitPullSourceCode(
 		resultChan,
@@ -133,7 +133,7 @@ func (c *CiManagerType) startCi(
 		return err
 	}
 
-	c.logger.Info("pull 代码完成.")
+	logger.Info("pull 代码完成.")
 
 	if _, ok := global.GlobalData.StartLogTime[fullName]; !ok {
 		global.GlobalData.StartLogTime[fullName] = time.Now()
@@ -156,24 +156,25 @@ func (c *CiManagerType) startCi(
 		imageName = project.Image.Now
 	}
 
-	c.logger.InfoF("开始构建镜像 <%s>...", imageName)
+	logger.InfoF("开始构建镜像 <%s>...", imageName)
 	err = util.BuildImage(
 		resultChan,
+		srcPath,
 		project.Params.Env,
 		imageName,
 	)
 	if err != nil {
 		return err
 	}
-	c.logger.Info("构建镜像完成.")
+	logger.Info("构建镜像完成.")
 
 	if project.Image == nil || project.Image.Last2 != "" {
-		c.logger.InfoF("开始删除镜像 <%s>...", project.Image.Last2)
+		logger.InfoF("开始删除镜像 <%s>...", project.Image.Last2)
 		err = util.RemoveImage(resultChan, project.Image.Last2)
 		if err != nil {
 			return err
 		}
-		c.logger.Info("删除镜像完成.")
+		logger.Info("删除镜像完成.")
 	}
 
 	containerName := fmt.Sprintf("%s-%s", fullName, project.Params.Env)
@@ -182,13 +183,13 @@ func (c *CiManagerType) startCi(
 		return err
 	}
 	if containerExists {
-		c.logger.InfoF("开始停止容器 <%s>...", containerName)
+		logger.InfoF("开始停止容器 <%s>...", containerName)
 		err = util.StopContainer(containerName)
 		if err != nil {
 			return err
 		}
-		c.logger.Info("停止容器完成.")
-		c.logger.InfoF("开始备份容器 <%s> 日志...", containerName)
+		logger.Info("停止容器完成.")
+		logger.InfoF("开始备份容器 <%s> 日志...", containerName)
 		isPacked, err := util.BackupContainerLog(
 			resultChan,
 			logsPath,
@@ -201,10 +202,10 @@ func (c *CiManagerType) startCi(
 		if isPacked {
 			global.GlobalData.StartLogTime[fullName] = time.Now()
 		}
-		c.logger.Info("备份容器日志完成.")
+		logger.Info("备份容器日志完成.")
 
 	} else {
-		c.logger.InfoF("开始启动容器 <%s>...", containerName)
+		logger.InfoF("开始启动容器 <%s>...", containerName)
 		err = util.StartNewContainer(
 			resultChan,
 			imageName,
@@ -216,7 +217,7 @@ func (c *CiManagerType) startCi(
 		if err != nil {
 			return err
 		}
-		c.logger.Info("启动容器完成.")
+		logger.Info("启动容器完成.")
 	}
 
 	newImageInfo := db.ImageInfo{
