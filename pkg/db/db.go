@@ -33,7 +33,7 @@ type Project struct {
 	Params        *CiParams  `json:"params"`
 	Config        *string    `json:"config"`
 	Image         *ImageInfo `json:"image"`
-	Port          uint64     `json:"port"`
+	Port          string     `json:"port"`
 	Status        uint64     `json:"status"`
 	IsAutoRestart uint64     `json:"is_auto_restart"`
 	Restart       uint64     `json:"restart"`

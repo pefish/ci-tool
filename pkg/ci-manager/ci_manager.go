@@ -12,6 +12,7 @@ import (
 	"github.com/pefish/ci-tool/pkg/global"
 	"github.com/pefish/ci-tool/pkg/util"
 	go_file "github.com/pefish/go-file"
+	go_format "github.com/pefish/go-format"
 	i_logger "github.com/pefish/go-interface/i-logger"
 	t_mysql "github.com/pefish/go-interface/t-mysql"
 	"github.com/pkg/errors"
@@ -176,55 +177,98 @@ func (c *CiManagerType) startCi(
 		logger.Info("删除镜像完成.")
 	}
 
-	containerName := fmt.Sprintf("%s-%s", fullName, project.Params.Env)
-	containerExists, err := util.ContainerExists(containerName)
-	if err != nil {
-		return err
-	}
-	if containerExists {
-		logger.InfoF("开始停止容器 <%s>...", containerName)
-		err = util.StopContainer(containerName)
+	ports := strings.Split(project.Port, ",")
+	// 如果是多实例，则检查没有序号的容器存不存在，存在就删除
+	if len(ports) > 1 {
+		containerName := fmt.Sprintf("%s-%s", fullName, project.Params.Env)
+		containerExists, err := util.ContainerExists(containerName)
 		if err != nil {
 			return err
 		}
-		logger.Info("停止容器完成.")
+		if containerExists {
+			logger.InfoF("开始停止容器 <%s>...", containerName)
+			err = util.StopContainer(containerName)
+			if err != nil {
+				return err
+			}
+			logger.Info("停止容器完成.")
 
-		logger.InfoF("开始备份容器 <%s> 日志...", containerName)
-		isPacked, err := util.BackupContainerLog(
+			logger.InfoF("开始备份容器 <%s> 日志...", containerName)
+			isPacked, err := util.BackupContainerLog(
+				resultChan,
+				logsPath,
+				containerName,
+				global.GlobalData.StartLogTime[fullName],
+			)
+			if err != nil {
+				return err
+			}
+			if isPacked {
+				global.GlobalData.StartLogTime[fullName] = time.Now()
+			}
+			logger.Info("备份容器日志完成.")
+
+			logger.InfoF("开始删除容器 <%s>...", containerName)
+			err = util.RemoveContainer(containerName)
+			if err != nil {
+				return err
+			}
+			logger.Info("删除容器完成.")
+		}
+	}
+	for i, portStr := range ports {
+		port, _ := go_format.ToUint64(portStr)
+
+		containerName := fmt.Sprintf("%s-%s%d", fullName, project.Params.Env, i)
+		containerExists, err := util.ContainerExists(containerName)
+		if err != nil {
+			return err
+		}
+		if containerExists {
+			logger.InfoF("开始停止容器 <%s>...", containerName)
+			err = util.StopContainer(containerName)
+			if err != nil {
+				return err
+			}
+			logger.Info("停止容器完成.")
+
+			logger.InfoF("开始备份容器 <%s> 日志...", containerName)
+			isPacked, err := util.BackupContainerLog(
+				resultChan,
+				logsPath,
+				containerName,
+				global.GlobalData.StartLogTime[fullName],
+			)
+			if err != nil {
+				return err
+			}
+			if isPacked {
+				global.GlobalData.StartLogTime[fullName] = time.Now()
+			}
+			logger.Info("备份容器日志完成.")
+
+			logger.InfoF("开始删除容器 <%s>...", containerName)
+			err = util.RemoveContainer(containerName)
+			if err != nil {
+				return err
+			}
+			logger.Info("删除容器完成.")
+		}
+
+		logger.InfoF("开始启动容器 <%s>...", containerName)
+		err = util.StartNewContainer(
 			resultChan,
-			logsPath,
+			imageName,
+			envConfig,
+			port,
+			project.Params.DockerNetwork,
 			containerName,
-			global.GlobalData.StartLogTime[fullName],
 		)
 		if err != nil {
 			return err
 		}
-		if isPacked {
-			global.GlobalData.StartLogTime[fullName] = time.Now()
-		}
-		logger.Info("备份容器日志完成.")
-
-		logger.InfoF("开始删除容器 <%s>...", containerName)
-		err = util.RemoveContainer(containerName)
-		if err != nil {
-			return err
-		}
-		logger.Info("停止删除完成.")
+		logger.Info("启动容器完成.")
 	}
-
-	logger.InfoF("开始启动容器 <%s>...", containerName)
-	err = util.StartNewContainer(
-		resultChan,
-		imageName,
-		envConfig,
-		project.Port,
-		project.Params.DockerNetwork,
-		containerName,
-	)
-	if err != nil {
-		return err
-	}
-	logger.Info("启动容器完成.")
 
 	newImageInfo := db.ImageInfo{
 		Now: imageName,
