@@ -243,6 +243,13 @@ git config core.sshCommand "ssh -i `+fetchCodeKey+`"
 git reset --hard && git clean -d -f . && git pull && git checkout `+branch+` && git pull
 
 `,
+		func() string {
+			if fetchCodeKey == "" {
+				return ""
+			} else {
+				return fmt.Sprintf(` --config core.sshCommand="ssh -i %s"`, fetchCodeKey)
+			}
+		}(),
 	), resultChan)
 	if err != nil {
 		return err
