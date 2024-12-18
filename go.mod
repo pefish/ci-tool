@@ -4,15 +4,16 @@ go 1.21
 
 require (
 	github.com/pefish/go-commander v1.1.2
-	github.com/pefish/go-core v1.5.2
+	github.com/pefish/go-core v1.5.4
 	github.com/pefish/go-file v0.2.9
 	github.com/pefish/go-format v0.5.1
 	github.com/pefish/go-http v0.8.7
-	github.com/pefish/go-interface v0.1.3
+	github.com/pefish/go-interface v0.1.5
 	github.com/pefish/go-mysql v1.7.5
 	github.com/pefish/go-shell v0.1.3
 	github.com/pefish/go-task-driver v0.2.4
-	github.com/pefish/go-time v0.3.4
+	github.com/pefish/go-test v0.0.4
+	github.com/pefish/go-time v0.3.5
 	github.com/pefish/tg-sender v0.1.1
 	github.com/pkg/errors v0.9.1
 )
@@ -38,8 +39,8 @@ require (
 	github.com/pefish/go-string v0.1.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/net v0.31.0 // indirect
-	golang.org/x/text v0.20.0 // indirect
+	golang.org/x/net v0.32.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	moul.io/http2curl v1.0.0 // indirect
 )

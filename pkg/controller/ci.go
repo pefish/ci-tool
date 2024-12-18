@@ -3,7 +3,6 @@ package controller
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	ci_manager "github.com/pefish/ci-tool/pkg/ci-manager"
 	"github.com/pefish/ci-tool/pkg/db"
@@ -12,7 +11,6 @@ import (
 	i_core "github.com/pefish/go-interface/i-core"
 	t_error "github.com/pefish/go-interface/t-error"
 	t_mysql "github.com/pefish/go-interface/t-mysql"
-	go_mysql "github.com/pefish/go-mysql"
 	go_shell "github.com/pefish/go-shell"
 )
 
@@ -21,26 +19,20 @@ type CiControllerType struct {
 
 var CiController = CiControllerType{}
 
+type CiStartParams struct {
+	Name    string `json:"name" validate:"required"`
+	OrgName string `json:"org_name" validate:"required"`
+}
+
 func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, *t_error.ErrorInfo) {
-	var params db.CiParams
+	var params CiStartParams
 	err := apiSession.ScanParams(&params)
 	if err != nil {
 		apiSession.Logger().ErrorF("Read params error. %+v", err)
 		return nil, t_error.INTERNAL_ERROR
 	}
 
-	colonPos := strings.Index(params.Repo, ":")
-	slashPos := strings.Index(params.Repo, "/")
-	gitUsername := params.Repo[colonPos+1 : slashPos]
-	projectName := params.Repo[slashPos+1 : len(params.Repo)-4]
-	fullName := params.Name
-	if fullName == "" {
-		fullName = strings.ToLower(fmt.Sprintf("%s-%s", gitUsername, projectName))
-	}
-	imageName := params.ImageName
-	if imageName == "" {
-		imageName = fullName
-	}
+	fullName := fmt.Sprintf("%s-%s", params.OrgName, params.Name)
 
 	// 检查数据库中是否有这个项目
 	var project db.Project
@@ -66,37 +58,20 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 		return nil, t_error.WrapWithStr("Project disabled.")
 	}
 
-	_, err = global.MysqlInstance.Update(&t_mysql.UpdateParams{
-		TableName: "project",
-		Update: map[string]interface{}{
-			"params": params,
-		},
-		Where: map[string]interface{}{
-			"id": project.Id,
-		},
-	})
-	if err != nil && err != go_mysql.ErrorNoAffectedRows {
-		apiSession.Logger().Error(err)
-		return nil, t_error.INTERNAL_ERROR
+	if project.Params == nil {
+		util.AlertNoError(
+			apiSession.Logger(),
+			fmt.Sprintf("[ERROR] <%s> CI 参数没有配置。", fullName),
+		)
+
+		return nil, t_error.WrapWithStr("CI 参数没有配置.")
 	}
 
 	go ci_manager.CiManager.StartCi(
-		params.Env,
-		params.Repo,
-		params.FetchCodeKey,
-		gitUsername,
-		path.Join(global.GlobalConfig.SrcDir, gitUsername, projectName),
-		func() string {
-			if project.Config == nil {
-				return ""
-			} else {
-				return *project.Config
-			}
-		}(),
+		global.Command.Ctx,
+		&project,
+		path.Join(global.GlobalConfig.SrcDir, params.OrgName, params.Name),
 		fullName,
-		imageName,
-		project.Port,
-		params.DockerNetwork,
 	)
 
 	return true, nil

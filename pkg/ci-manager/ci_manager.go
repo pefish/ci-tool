@@ -1,19 +1,19 @@
 package ci_manager
 
 import (
+	"context"
 	"fmt"
-	"os/exec"
 	"path"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/pefish/ci-tool/pkg/db"
 	"github.com/pefish/ci-tool/pkg/global"
 	"github.com/pefish/ci-tool/pkg/util"
 	go_file "github.com/pefish/go-file"
 	i_logger "github.com/pefish/go-interface/i-logger"
-	go_shell "github.com/pefish/go-shell"
-	go_time "github.com/pefish/go-time"
+	t_mysql "github.com/pefish/go-interface/t-mysql"
 	"github.com/pkg/errors"
 )
 
@@ -41,37 +41,26 @@ func (c *CiManagerType) Logs(fullName string) string {
 }
 
 func (c *CiManagerType) StartCi(
-	env,
-	repo,
-	fetchCodeKey,
-	gitUsername,
+	ctx context.Context,
+	project *db.Project,
 	srcPath,
-	config,
 	fullName string,
-	imageName string,
-	port uint64,
-	dockerNetwork string,
 ) {
 	c.logs.Delete(fullName)
 	logger := c.logger.CloneWithPrefix(fullName)
 	logger.InfoF("<%s> running...\n", fullName)
 	err := c.startCi(
+		ctx,
 		logger,
-		env,
-		repo,
-		fetchCodeKey,
+		project,
 		srcPath,
-		config,
 		fullName,
-		imageName,
-		port,
-		dockerNetwork,
 	)
 	if err != nil {
 		c.logs.Store(fullName, err.Error())
 		util.AlertNoError(
 			c.logger,
-			fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。\n%+v", fullName, env, err),
+			fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。\n%+v", fullName, project.Params.Env, err),
 		)
 		logger.ErrorF("<%s> failed!!! %+v", fullName, err)
 		return
@@ -79,7 +68,7 @@ func (c *CiManagerType) StartCi(
 
 	err = util.Alert(
 		c.logger,
-		fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", fullName, env),
+		fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", fullName, project.Params.Env),
 	)
 	if err != nil {
 		logger.ErrorF("<%s> 发送通知失败!!! %+v", fullName, err)
@@ -89,155 +78,12 @@ func (c *CiManagerType) StartCi(
 }
 
 func (c *CiManagerType) startCi(
+	ctx context.Context,
 	logger i_logger.ILogger,
-	env,
-	repo,
-	fetchCodeKey,
+	project *db.Project,
 	srcPath,
-	config,
 	fullName string,
-	imageName string,
-	port uint64,
-	dockerNetwork string,
 ) error {
-
-	if env != "test" && env != "prod" {
-		return errors.New("Env is illegal.")
-	}
-
-	branch := "test"
-	if env == "prod" {
-		branch = "main"
-	}
-
-	if strings.HasPrefix(srcPath, "~") {
-		srcPath = "${HOME}" + srcPath[1:]
-	}
-
-	if _, ok := global.GlobalData.StartLogTime[fullName]; !ok {
-		global.GlobalData.StartLogTime[fullName] = time.Now()
-	}
-
-	logsPath := path.Join(global.Command.DataDir, "logs", fullName)
-	err := go_file.AssertPathExist(logsPath)
-	if err != nil {
-		return err
-	}
-
-	script := fmt.Sprintf(
-		`
-#!/bin/bash
-set -euxo pipefail
-
-src="`+srcPath+`"
-
-# 检查源代码目录是否存在
-if [ ! -d "$src" ]; then
-    echo "源代码目录 '$src' 不存在，正在克隆仓库..."
-    git clone%s "`+repo+`" "$src"
-    
-    if [ $? -eq 0 ]; then
-        echo "克隆成功！"
-    else
-        echo "克隆失败，请检查 Git 仓库 URL 和网络连接。"
-        exit 1
-    fi
-fi
-
-cd ${src}
-git config core.sshCommand "ssh -i `+fetchCodeKey+`"
-git reset --hard && git clean -d -f . && git pull && git checkout `+branch+` && git pull
-
-imageName="`+imageName+`:$(git rev-parse --short HEAD)"
-
-if [[ "$(sudo docker images -q ${imageName} 2> /dev/null)" == "" ]]; then
-  sudo docker build --build-arg APP_ENV=`+env+` -t ${imageName} .
-fi
-
-containerName="`+fullName+`-`+env+`"
-
-# 检查容器是否存在
-if sudo docker ps -a --filter "name=^${containerName}$" --format '{{.Names}}' | grep -q "^${containerName}$"; then
-	sudo docker stop ${containerName}
-
-	containerId=$(sudo docker inspect ${containerName} | grep '"Id"' | head -1 | awk -F '"' '{print $4}')
-
-	logPath="/var/lib/docker/containers/$containerId/${containerId}-json.log"
-
-	backupLogDir="`+logsPath+`"
-
-	sudo cat ${logPath} >> ${backupLogDir}/current.log
-
-	echo "日志已备份到 $backupLogDir"
-
-	%s
-
-	imageId=$(sudo docker inspect "$containerName" --format '{{.Image}}')
-
-	sudo docker rm ${containerName}
-
-	# 删除镜像（如果失败，脚本继续运行）
-	if [ -n "$imageId" ]; then
-		echo "Deleting image: $imageId"
-		sudo docker rmi "$imageId" || echo "Failed to delete image $imageId, continuing..."
-	else
-		echo "No image ID found for container: $containerName"
-	fi
-fi
-
-
-# 创建一个临时文件
-TEMP_FILE=$(mktemp)
-
-echo "`+config+`" > "$TEMP_FILE"
-
-sudo docker run --name ${containerName} --env-file "$TEMP_FILE" -d %s%s ${imageName}
-
-# 删除临时文件
-rm "$TEMP_FILE"
-
-`,
-		func() string {
-			if fetchCodeKey == "" {
-				return ""
-			} else {
-				return fmt.Sprintf(` --config core.sshCommand="ssh -i %s"`, fetchCodeKey)
-			}
-		}(),
-		func() string {
-			if time.Since(global.GlobalData.StartLogTime[fullName]) > 10*24*time.Hour {
-				now := time.Now()
-				global.GlobalData.StartLogTime[fullName] = now
-				return fmt.Sprintf(
-					`
-mv ${backupLogDir}/current.log ${backupLogDir}/%s_%s.log
-
-echo "日志已打包"
-`,
-					go_time.TimeToStr(global.GlobalData.StartLogTime[fullName], "0000-00-00 00:00:00"),
-					go_time.TimeToStr(now, "0000-00-00 00:00:00"),
-				)
-			} else {
-				return ""
-			}
-		}(),
-		func() string {
-			if port == 0 {
-				return ""
-			} else {
-				return fmt.Sprintf(" -p %d:8000", port)
-			}
-		}(),
-		func() string {
-			if dockerNetwork == "" {
-				return ""
-			} else {
-				return fmt.Sprintf(` --network %s`, dockerNetwork)
-			}
-		}(),
-	)
-	cmd := exec.Command("/bin/bash", "-c", script)
-
 	resultChan := make(chan string)
 	go func() {
 		for {
@@ -250,13 +96,132 @@ echo "日志已打包"
 				} else {
 					c.logs.Store(fullName, d.(string)+r+"\n")
 				}
+			case <-ctx.Done():
+				return
 			}
 		}
 	}()
-	err = go_shell.ExecForResultLineByLine(cmd, resultChan)
+
+	if project.Params.Env != "test" && project.Params.Env != "prod" {
+		return errors.New("Env is illegal.")
+	}
+
+	envConfig := ""
+	if project.Config != nil {
+		envConfig = *project.Config
+	}
+
+	branch := "test"
+	if project.Params.Env == "prod" {
+		branch = "main"
+	}
+
+	if strings.HasPrefix(srcPath, "~") {
+		srcPath = "${HOME}" + srcPath[1:]
+	}
+
+	err := util.GitPullSourceCode(
+		resultChan,
+		srcPath,
+		project.Params.Repo,
+		project.Params.FetchCodeKey,
+		branch,
+	)
 	if err != nil {
 		return err
 	}
+
+	if _, ok := global.GlobalData.StartLogTime[fullName]; !ok {
+		global.GlobalData.StartLogTime[fullName] = time.Now()
+	}
+
+	logsPath := path.Join(global.Command.DataDir, "logs", fullName)
+	err = go_file.AssertPathExist(logsPath)
+	if err != nil {
+		return err
+	}
+
+	imageName := ""
+	if project.Image == nil || project.Image.Now == "" {
+		shortCommitHash, err := util.GetGitShortCommitHash(srcPath)
+		if err != nil {
+			return err
+		}
+		imageName = fmt.Sprintf("%s:%s", fullName, shortCommitHash)
+	} else {
+		imageName = project.Image.Now
+	}
+
+	err = util.BuildImage(
+		resultChan,
+		project.Params.Env,
+		imageName,
+	)
+	if err != nil {
+		return err
+	}
+	if project.Image == nil || project.Image.Last2 != "" {
+		err = util.RemoveImage(resultChan, project.Image.Last2)
+		if err != nil {
+			return err
+		}
+	}
+
+	containerName := fmt.Sprintf("%s-%s", fullName, project.Params.Env)
+	containerExists, err := util.ContainerExists(containerName)
+	if err != nil {
+		return err
+	}
+	if containerExists {
+		err = util.StopContainer(containerName)
+		if err != nil {
+			return err
+		}
+		isPacked, err := util.BackupContainerLog(
+			resultChan,
+			logsPath,
+			containerName,
+			global.GlobalData.StartLogTime[fullName],
+		)
+		if err != nil {
+			return err
+		}
+		if isPacked {
+			global.GlobalData.StartLogTime[fullName] = time.Now()
+		}
+
+	} else {
+		err = util.StartNewContainer(
+			resultChan,
+			imageName,
+			envConfig,
+			project.Port,
+			project.Params.DockerNetwork,
+			containerName,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	newImageInfo := db.ImageInfo{
+		Now: imageName,
+	}
+	if project.Image != nil && project.Image.Now != "" {
+		newImageInfo.Last1 = project.Image.Now
+	}
+	if project.Image != nil && project.Image.Last1 != "" {
+		newImageInfo.Last2 = project.Image.Last1
+	}
+	global.MysqlInstance.Update(&t_mysql.UpdateParams{
+		TableName: "project",
+		Update: map[string]interface{}{
+			"image": newImageInfo,
+		},
+		Where: map[string]interface{}{
+			"id": project.Id,
+		},
+	})
 
 	return nil
 }

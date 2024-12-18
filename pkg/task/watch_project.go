@@ -49,7 +49,7 @@ func (t *WatchProject) Run(ctx context.Context) error {
 		}
 
 		if project.Start == 1 {
-			err = util.StartContainer(t.logger, containerName)
+			err = util.StartContainer(containerName)
 			if err != nil {
 				util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 启动失败 (%s)
@@ -73,7 +73,7 @@ func (t *WatchProject) Run(ctx context.Context) error {
 		}
 
 		if project.Stop == 1 {
-			err = util.StopContainer(t.logger, containerName)
+			err = util.StopContainer(containerName)
 			if err != nil {
 				util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 停止失败 (%s)
@@ -98,7 +98,7 @@ func (t *WatchProject) Run(ctx context.Context) error {
 		}
 
 		if project.Restart == 1 {
-			err = util.RestartContainer(t.logger, containerName)
+			err = util.RestartContainer(containerName)
 			if err != nil {
 				util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 重启失败 (%s)
@@ -146,28 +146,12 @@ func (t *WatchProject) Run(ctx context.Context) error {
 			gitUsername := project.Params.Repo[colonPos+1 : slashPos]
 			projectName := project.Params.Repo[slashPos+1 : len(project.Params.Repo)-4]
 			fullName := project.Name
-			imageName := project.Params.ImageName
-			if imageName == "" {
-				imageName = fullName
-			}
 
 			ci_manager.CiManager.StartCi(
-				project.Params.Env,
-				project.Params.Repo,
-				project.Params.FetchCodeKey,
-				gitUsername,
+				global.Command.Ctx,
+				project,
 				path.Join(global.GlobalConfig.SrcDir, gitUsername, projectName),
-				func() string {
-					if project.Config == nil {
-						return ""
-					} else {
-						return *project.Config
-					}
-				}(),
 				fullName,
-				imageName,
-				project.Port,
-				project.Params.DockerNetwork,
 			)
 			util.AlertNoError(t.logger, fmt.Sprintf(`
 项目 <%s> 重新构建成功

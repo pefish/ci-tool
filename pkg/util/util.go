@@ -9,6 +9,7 @@ import (
 	go_http "github.com/pefish/go-http"
 	i_logger "github.com/pefish/go-interface/i-logger"
 	go_shell "github.com/pefish/go-shell"
+	go_time "github.com/pefish/go-time"
 	tg_sender "github.com/pefish/tg-sender"
 	"github.com/pkg/errors"
 )
@@ -66,7 +67,7 @@ func Alert(logger i_logger.ILogger, msg string) error {
 	return nil
 }
 
-func FetchErrorMsgFromContainer(logger i_logger.ILogger, containerName string) (string, error) {
+func FetchErrorMsgFromContainer(containerName string) (string, error) {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
 	
@@ -92,7 +93,7 @@ sudo docker logs "${container_name}" --tail 200
 	return result, nil
 }
 
-func StartContainer(logger i_logger.ILogger, containerName string) error {
+func StartContainer(containerName string) error {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
 
@@ -124,7 +125,7 @@ sudo docker start "${container_name}"
 	return nil
 }
 
-func StopContainer(logger i_logger.ILogger, containerName string) error {
+func StopContainer(containerName string) error {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
 
@@ -156,7 +157,7 @@ sudo docker stop "${container_name}"
 	return nil
 }
 
-func RestartContainer(logger i_logger.ILogger, containerName string) error {
+func RestartContainer(containerName string) error {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
 
@@ -192,4 +193,212 @@ func ListAllAliveContainers(logger i_logger.ILogger) ([]string, error) {
 	lines := strings.Split(result, "\n")
 
 	return lines[1 : len(lines)-1], nil
+}
+
+func GetGitShortCommitHash(srcPath string) (string, error) {
+	shortCommitHash, err := go_shell.ExecForResult(go_shell.NewCmd(
+		`
+#!/bin/bash
+src="` + srcPath + `"
+cd ${src}
+echo $(git rev-parse --short HEAD)
+`,
+	))
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSuffix(shortCommitHash, "\n"), nil
+}
+
+func GitPullSourceCode(
+	resultChan chan string,
+	srcPath string,
+	repo string,
+	fetchCodeKey string,
+	branch string,
+) error {
+	err := go_shell.ExecForResultLineByLine(go_shell.NewCmd(
+		`
+#!/bin/bash
+set -euxo pipefail
+
+src="`+srcPath+`"
+
+# 检查源代码目录是否存在
+if [ ! -d "$src" ]; then
+    echo "源代码目录 '$src' 不存在，正在克隆仓库..."
+    git clone%s "`+repo+`" "$src"
+    
+    if [ $? -eq 0 ]; then
+        echo "克隆成功！"
+    else
+        echo "克隆失败，请检查 Git 仓库 URL 和网络连接。"
+        exit 1
+    fi
+fi
+
+cd ${src}
+git config core.sshCommand "ssh -i `+fetchCodeKey+`"
+git reset --hard && git clean -d -f . && git pull && git checkout `+branch+` && git pull
+
+`,
+	), resultChan)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func BuildImage(
+	resultChan chan string,
+	env string,
+	imageName string,
+) error {
+	err := go_shell.ExecForResultLineByLine(go_shell.NewCmd(
+		`
+#!/bin/bash
+set -euxo pipefail
+
+if [[ "$(sudo docker images -q `+imageName+` 2> /dev/null)" == "" ]]; then
+  sudo docker build --build-arg APP_ENV=`+env+` -t `+imageName+` .
+fi
+`,
+	), resultChan)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ContainerExists(containerName string) (bool, error) {
+	r, err := go_shell.ExecForResult(go_shell.NewCmd(
+		`
+#!/bin/bash
+if sudo docker ps -a --filter "name=` + containerName + `" --format '{{.Names}}' | grep -q "` + containerName + `"; then
+	echo 1
+	exit 0
+fi
+
+echo 0
+`,
+	))
+	if err != nil {
+		return false, err
+	}
+
+	return r == "1\n", nil
+}
+
+func StartNewContainer(
+	resultChan chan string,
+	imageName string,
+	envConfig string,
+	port uint64,
+	network string,
+	containerName string,
+) error {
+	portStr := ""
+	if port != 0 {
+		portStr = fmt.Sprintf("-p %d:8000", port)
+	}
+	networkStr := ""
+	if network != "" {
+		networkStr = fmt.Sprintf(`--network %s`, network)
+	}
+	err := go_shell.ExecForResultLineByLine(go_shell.NewCmd(
+		`
+#!/bin/bash
+set -euxo pipefail
+
+# 创建一个临时文件
+TEMP_FILE=$(mktemp)
+
+echo "`+envConfig+`" > "$TEMP_FILE"
+
+sudo docker run --name `+containerName+` --env-file "$TEMP_FILE" -d `+portStr+` `+networkStr+` `+imageName+`
+
+# 删除临时文件
+rm "$TEMP_FILE"
+`,
+	), resultChan)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func BackupContainerLog(
+	resultChan chan string,
+	logsPath string,
+	containerName string,
+	startLogTime time.Time,
+) (isPacked_ bool, err_ error) {
+	err := go_shell.ExecForResultLineByLine(go_shell.NewCmd(
+		`
+#!/bin/bash
+set -euxo pipefail
+
+containerId=$(sudo docker inspect `+containerName+` | grep '"Id"' | head -1 | awk -F '"' '{print $4}')
+
+logPath="/var/lib/docker/containers/${containerId}/${containerId}-json.log"
+
+sudo cat ${logPath} >> `+logsPath+`/current.log
+
+echo "日志已备"
+`,
+	), resultChan)
+	if err != nil {
+		return false, err
+	}
+
+	if time.Since(startLogTime) > 10*24*time.Hour {
+		err = go_shell.ExecForResultLineByLine(go_shell.NewCmd(
+			`
+mv `+logsPath+`/current.log `+logsPath+`/%s_%s.log
+
+echo "日志已打包"
+`,
+			go_time.TimeToStr(startLogTime, "0000-00-00 00:00:00"),
+			go_time.TimeToStr(time.Now(), "0000-00-00 00:00:00"),
+		), resultChan)
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func RemoveImage(
+	resultChan chan string,
+	containerName string,
+) error {
+	err := go_shell.ExecForResultLineByLine(go_shell.NewCmd(
+		`
+#!/bin/bash
+set -euxo pipefail
+
+imageId=$(sudo docker inspect `+containerName+` --format '{{.Image}}')
+
+sudo docker rm `+containerName+`
+
+# 删除老的镜像（如果失败，脚本继续运行）
+if [ -n "$imageId" ]; then
+	echo "Deleting image: $imageId"
+	sudo docker rmi "$imageId" || echo "Failed to delete image $imageId, continuing..."
+else
+	echo "No image ID found for container: $containerName"
+fi
+`,
+	), resultChan)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

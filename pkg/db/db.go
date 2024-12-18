@@ -15,24 +15,29 @@ type IdType struct {
 
 type CiParams struct {
 	Env           string `json:"env" validate:"required"`
-	Name          string `json:"name"`
-	ImageName     string `json:"image_name"`
 	Repo          string `json:"repo" validate:"required"`
 	FetchCodeKey  string `json:"fetch_code_key" validate:"required"`
 	DockerNetwork string `json:"docker_network"`
 }
 
+type ImageInfo struct {
+	Now   string `json:"now"`
+	Last1 string `json:"last1"`
+	Last2 string `json:"last2"`
+}
+
 type Project struct {
 	IdType
-	Name          string    `json:"name"`
-	Params        *CiParams `json:"params"`
-	Config        *string   `json:"config"`
-	Port          uint64    `json:"port"`
-	Status        uint64    `json:"status"`
-	IsAutoRestart uint64    `json:"is_auto_restart"`
-	Restart       uint64    `json:"restart"`
-	Stop          uint64    `json:"stop"`
-	Start         uint64    `json:"start"`
-	Rebuild       uint64    `json:"rebuild"`
+	Name          string     `json:"name"`
+	Params        *CiParams  `json:"params"`
+	Config        *string    `json:"config"`
+	Image         *ImageInfo `json:"image"`
+	Port          uint64     `json:"port"`
+	Status        uint64     `json:"status"`
+	IsAutoRestart uint64     `json:"is_auto_restart"`
+	Restart       uint64     `json:"restart"`
+	Stop          uint64     `json:"stop"`
+	Start         uint64     `json:"start"`
+	Rebuild       uint64     `json:"rebuild"`
 	DbTime
 }

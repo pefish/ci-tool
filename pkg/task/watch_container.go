@@ -97,7 +97,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 			global.GlobalData.DeadProjects = append(global.GlobalData.DeadProjects, containerName)
 
 			// 记录错误信息
-			errorMsg, err := util.FetchErrorMsgFromContainer(t.logger, containerName)
+			errorMsg, err := util.FetchErrorMsgFromContainer(containerName)
 			if err != nil {
 				t.logger.InfoF("docker logs 命令执行出错：%+v", err)
 			} else {
@@ -118,7 +118,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 			}
 
 			if project.IsAutoRestart == 1 {
-				err = util.StartContainer(t.logger, containerName)
+				err = util.StartContainer(containerName)
 				if err != nil {
 					return err
 				}
