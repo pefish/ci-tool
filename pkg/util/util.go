@@ -318,7 +318,7 @@ func ContainerExists(containerName string) (bool, error) {
 	r, err := go_shell.ExecForResult(go_shell.NewCmd(
 		`
 #!/bin/bash
-if sudo docker ps -a --filter "name=` + containerName + `" --format '{{.Names}}' | grep -q "` + containerName + `"; then
+if sudo docker ps -a --filter "name=^` + containerName + `$" --format '{{.Names}}' | grep -q "` + containerName + `"; then
 	echo 1
 	exit 0
 fi
