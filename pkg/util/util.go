@@ -417,23 +417,16 @@ echo "日志已打包"
 
 func RemoveImage(
 	resultChan chan string,
-	containerName string,
+	imageName string,
 ) error {
 	err := go_shell.ExecForResultLineByLine(go_shell.NewCmd(
 		`
 #!/bin/bash
 set -euxo pipefail
 
-imageId=$(sudo docker inspect `+containerName+` --format '{{.Image}}')
-
-# 删除老的镜像（如果失败，脚本继续运行）
-if [ -n "$imageId" ]; then
-	echo "Deleting image: $imageId"
-	sudo docker rmi "$imageId" || echo "Failed to delete image $imageId, continuing..."
-else
-	echo "No image ID found for container: $containerName"
-fi
+sudo docker rmi "%s" || echo "Failed to delete image, continuing..."
 `,
+		imageName,
 	), resultChan)
 	if err != nil {
 		return err
