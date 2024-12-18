@@ -43,119 +43,125 @@ func (t *WatchProject) Run(ctx context.Context) error {
 	}
 
 	for _, project := range projects {
-		containerName := fmt.Sprintf("%s-prod", project.Name)
-		if project.Status == 0 {
-			continue
-		}
-
-		if project.Start == 1 {
-			err = util.StartContainer(containerName)
-			if err != nil {
-				util.AlertNoError(t.logger, fmt.Sprintf(`
-项目 <%s> 启动失败 (%s)
-				`, containerName, err.Error()))
-			} else {
-				util.AlertNoError(t.logger, fmt.Sprintf(`
-项目 <%s> 启动成功
-				`, containerName))
+		ports := strings.Split(project.Port, ",")
+		for i := range ports {
+			containerName := fmt.Sprintf("%s-prod%d", project.Name, i)
+			if len(ports) == 1 {
+				containerName = fmt.Sprintf("%s-prod", project.Name)
 			}
-			global.MysqlInstance.Update(
-				&t_mysql.UpdateParams{
-					TableName: "project",
-					Update: map[string]interface{}{
-						"start": 0,
-					},
-					Where: map[string]interface{}{
-						"id": project.Id,
-					},
-				},
-			)
-		}
-
-		if project.Stop == 1 {
-			err = util.StopContainer(containerName)
-			if err != nil {
-				util.AlertNoError(t.logger, fmt.Sprintf(`
-项目 <%s> 停止失败 (%s)
-				`, containerName, err.Error()))
-			} else {
-				util.AlertNoError(t.logger, fmt.Sprintf(`
-项目 <%s> 停止成功
-				`, containerName))
-			}
-			global.MysqlInstance.Update(
-				&t_mysql.UpdateParams{
-					TableName: "project",
-					Update: map[string]interface{}{
-						"stop":            0,
-						"is_auto_restart": 0,
-					},
-					Where: map[string]interface{}{
-						"id": project.Id,
-					},
-				},
-			)
-		}
-
-		if project.Restart == 1 {
-			err = util.RestartContainer(containerName)
-			if err != nil {
-				util.AlertNoError(t.logger, fmt.Sprintf(`
-项目 <%s> 重启失败 (%s)
-				`, containerName, err.Error()))
-			} else {
-				util.AlertNoError(t.logger, fmt.Sprintf(`
-项目 <%s> 重启成功
-				`, containerName))
-			}
-			global.MysqlInstance.Update(
-				&t_mysql.UpdateParams{
-					TableName: "project",
-					Update: map[string]interface{}{
-						"restart": 0,
-					},
-					Where: map[string]interface{}{
-						"id": project.Id,
-					},
-				},
-			)
-		}
-
-		if project.Rebuild == 1 {
-			global.MysqlInstance.Update(
-				&t_mysql.UpdateParams{
-					TableName: "project",
-					Update: map[string]interface{}{
-						"rebuild": 0,
-					},
-					Where: map[string]interface{}{
-						"id": project.Id,
-					},
-				},
-			)
-
-			if project.Params == nil {
-				util.AlertNoError(t.logger, fmt.Sprintf(`
-项目 <%s> 重新构建失败 (没有 params)
-				`, containerName))
+			if project.Status == 0 {
 				continue
 			}
 
-			colonPos := strings.Index(project.Params.Repo, ":")
-			slashPos := strings.Index(project.Params.Repo, "/")
-			gitUsername := project.Params.Repo[colonPos+1 : slashPos]
-			projectName := project.Params.Repo[slashPos+1 : len(project.Params.Repo)-4]
-			fullName := project.Name
+			if project.Start == 1 {
+				err = util.StartContainer(containerName)
+				if err != nil {
+					util.AlertNoError(t.logger, fmt.Sprintf(`
+	项目 <%s> 启动失败 (%s)
+					`, containerName, err.Error()))
+				} else {
+					util.AlertNoError(t.logger, fmt.Sprintf(`
+	项目 <%s> 启动成功
+					`, containerName))
+				}
+				global.MysqlInstance.Update(
+					&t_mysql.UpdateParams{
+						TableName: "project",
+						Update: map[string]interface{}{
+							"start": 0,
+						},
+						Where: map[string]interface{}{
+							"id": project.Id,
+						},
+					},
+				)
+			}
 
-			ci_manager.CiManager.StartCi(
-				global.Command.Ctx,
-				project,
-				path.Join(global.GlobalConfig.SrcDir, gitUsername, projectName),
-				fullName,
-			)
-			util.AlertNoError(t.logger, fmt.Sprintf(`
-项目 <%s> 重新构建成功
-`, containerName))
+			if project.Stop == 1 {
+				err = util.StopContainer(containerName)
+				if err != nil {
+					util.AlertNoError(t.logger, fmt.Sprintf(`
+	项目 <%s> 停止失败 (%s)
+					`, containerName, err.Error()))
+				} else {
+					util.AlertNoError(t.logger, fmt.Sprintf(`
+	项目 <%s> 停止成功
+					`, containerName))
+				}
+				global.MysqlInstance.Update(
+					&t_mysql.UpdateParams{
+						TableName: "project",
+						Update: map[string]interface{}{
+							"stop":            0,
+							"is_auto_restart": 0,
+						},
+						Where: map[string]interface{}{
+							"id": project.Id,
+						},
+					},
+				)
+			}
+
+			if project.Restart == 1 {
+				err = util.RestartContainer(containerName)
+				if err != nil {
+					util.AlertNoError(t.logger, fmt.Sprintf(`
+	项目 <%s> 重启失败 (%s)
+					`, containerName, err.Error()))
+				} else {
+					util.AlertNoError(t.logger, fmt.Sprintf(`
+	项目 <%s> 重启成功
+					`, containerName))
+				}
+				global.MysqlInstance.Update(
+					&t_mysql.UpdateParams{
+						TableName: "project",
+						Update: map[string]interface{}{
+							"restart": 0,
+						},
+						Where: map[string]interface{}{
+							"id": project.Id,
+						},
+					},
+				)
+			}
+
+			if project.Rebuild == 1 {
+				global.MysqlInstance.Update(
+					&t_mysql.UpdateParams{
+						TableName: "project",
+						Update: map[string]interface{}{
+							"rebuild": 0,
+						},
+						Where: map[string]interface{}{
+							"id": project.Id,
+						},
+					},
+				)
+
+				if project.Params == nil {
+					util.AlertNoError(t.logger, fmt.Sprintf(`
+	项目 <%s> 重新构建失败 (没有 params)
+					`, containerName))
+					continue
+				}
+
+				colonPos := strings.Index(project.Params.Repo, ":")
+				slashPos := strings.Index(project.Params.Repo, "/")
+				gitUsername := project.Params.Repo[colonPos+1 : slashPos]
+				projectName := project.Params.Repo[slashPos+1 : len(project.Params.Repo)-4]
+				fullName := project.Name
+
+				ci_manager.CiManager.StartCi(
+					global.Command.Ctx,
+					project,
+					path.Join(global.GlobalConfig.SrcDir, gitUsername, projectName),
+					fullName,
+				)
+				util.AlertNoError(t.logger, fmt.Sprintf(`
+	项目 <%s> 重新构建成功
+	`, containerName))
+			}
 		}
 
 	}
