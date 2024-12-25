@@ -178,7 +178,7 @@ func (c *CiManagerType) startCi(
 	}
 
 	// 删除每一个容器
-	containerNames, err := util.ListProjectContainers(fullName)
+	containerNames, err := util.ListProjectContainers(fmt.Sprintf("%s-%s", fullName, project.Params.Env))
 	if err != nil {
 		return err
 	}
