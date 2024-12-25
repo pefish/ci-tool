@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"path"
+	"strings"
 
 	ci_manager "github.com/pefish/ci-tool/pkg/ci-manager"
 	"github.com/pefish/ci-tool/pkg/db"
@@ -32,47 +33,48 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 		return nil, t_error.INTERNAL_ERROR
 	}
 
-	fullName := fmt.Sprintf("%s-%s", params.OrgName, params.Name)
-
-	// 检查数据库中是否有这个项目
-	var project db.Project
-	notFound, err := global.MysqlInstance.SelectFirst(
-		&project,
-		&t_mysql.SelectParams{
-			TableName: "project",
-			Select:    "*",
-			Where:     "status = 1 and name = ?",
-		},
-		fullName,
-	)
-	if err != nil {
-		apiSession.Logger().Error(err)
-		return nil, t_error.INTERNAL_ERROR
-	}
-	if notFound {
-		util.AlertNoError(
-			apiSession.Logger(),
-			fmt.Sprintf("[ERROR] <%s> CI 被禁用。", fullName),
+	for _, name := range strings.Split(params.Name, ",") {
+		fullName := fmt.Sprintf("%s-%s", params.OrgName, name)
+		// 检查数据库中是否有这个项目
+		var project db.Project
+		notFound, err := global.MysqlInstance.SelectFirst(
+			&project,
+			&t_mysql.SelectParams{
+				TableName: "project",
+				Select:    "*",
+				Where:     "status = 1 and name = ?",
+			},
+			fullName,
 		)
+		if err != nil {
+			apiSession.Logger().Error(err)
+			return nil, t_error.INTERNAL_ERROR
+		}
+		if notFound {
+			util.AlertNoError(
+				apiSession.Logger(),
+				fmt.Sprintf("[ERROR] <%s> CI 被禁用。", fullName),
+			)
 
-		return nil, t_error.WrapWithStr("Project disabled.")
-	}
+			return nil, t_error.WrapWithStr("Project disabled.")
+		}
 
-	if project.Params == nil {
-		util.AlertNoError(
-			apiSession.Logger(),
-			fmt.Sprintf("[ERROR] <%s> CI 参数没有配置。", fullName),
+		if project.Params == nil {
+			util.AlertNoError(
+				apiSession.Logger(),
+				fmt.Sprintf("[ERROR] <%s> CI 参数没有配置。", fullName),
+			)
+
+			return nil, t_error.WrapWithStr("CI 参数没有配置.")
+		}
+
+		go ci_manager.CiManager.StartCi(
+			global.Command.Ctx,
+			&project,
+			path.Join(global.GlobalConfig.SrcDir, params.OrgName, name),
+			fullName,
 		)
-
-		return nil, t_error.WrapWithStr("CI 参数没有配置.")
 	}
-
-	go ci_manager.CiManager.StartCi(
-		global.Command.Ctx,
-		&project,
-		path.Join(global.GlobalConfig.SrcDir, params.OrgName, params.Name),
-		fullName,
-	)
 
 	return true, nil
 }
