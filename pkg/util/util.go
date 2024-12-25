@@ -346,6 +346,9 @@ echo $(sudo docker ps -a --filter "name=%s" --format '{{.Names}}')
 		return nil, err
 	}
 	r = strings.TrimSuffix(r, "\n")
+	if r == "" {
+		return nil, nil
+	}
 
 	return strings.Split(r, " "), nil
 }
