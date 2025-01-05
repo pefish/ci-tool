@@ -416,7 +416,7 @@ echo "日志已备份"
 		return false, err
 	}
 
-	if time.Since(startLogTime) > 10*24*time.Hour {
+	if time.Since(startLogTime) > 3*24*time.Hour {
 		err = go_shell.ExecForResultLineByLine(go_shell.NewCmd(
 			`
 mv `+logsPath+`/current.log `+logsPath+`/%s_%s.log
