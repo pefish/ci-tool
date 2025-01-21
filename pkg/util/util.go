@@ -70,7 +70,6 @@ func Alert(logger i_logger.ILogger, msg string) error {
 func FetchErrorMsgFromContainer(containerName string) (string, error) {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
-set -euxo pipefail
 	
 # 要检查的容器名称
 container_name="%s"
@@ -97,7 +96,6 @@ sudo docker logs "${container_name}" --tail 200
 func StartContainer(containerName string) error {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
-set -euxo pipefail
 
 # 要检查的容器名称
 container_name="%s"
@@ -130,7 +128,6 @@ sudo docker start "${container_name}"
 func StopContainer(containerName string) error {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
-set -euxo pipefail
 
 # 要检查的容器名称
 container_name="%s"
@@ -163,7 +160,6 @@ sudo docker stop "${container_name}"
 func RemoveContainer(containerName string) error {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
-set -euxo pipefail
 
 # 要检查的容器名称
 container_name="%s"
@@ -195,7 +191,6 @@ sudo docker rm "${container_name}"
 func RestartContainer(containerName string) error {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
-set -euxo pipefail
 
 # 要检查的容器名称
 container_name="%s"
@@ -240,7 +235,6 @@ func GetGitShortCommitHash(srcPath string) (string, error) {
 	shortCommitHash, err := go_shell.ExecForResult(go_shell.NewCmd(
 		`
 #!/bin/bash
-set -euxo pipefail
 
 src="` + srcPath + `"
 cd ${src}
@@ -330,7 +324,6 @@ func ContainerExists(containerName string) (bool, error) {
 	r, err := go_shell.ExecForResult(go_shell.NewCmd(
 		`
 #!/bin/bash
-set -euxo pipefail
 
 if sudo docker ps -a --filter "name=^` + containerName + `$" --format '{{.Names}}' | grep -q "` + containerName + `"; then
 	echo 1
@@ -351,7 +344,6 @@ func ListProjectContainers(fullName string) ([]string, error) {
 	r, err := go_shell.ExecForResult(go_shell.NewCmd(
 		`
 #!/bin/bash
-set -euxo pipefail
 
 echo $(sudo docker ps -a --filter "name=%s" --format '{{.Names}}')
 `,
