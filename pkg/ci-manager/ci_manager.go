@@ -136,6 +136,7 @@ func (c *CiManagerType) startCi(
 
 	logger.Info("pull 代码完成.")
 
+	fmt.Println("111", global.GlobalData.StartLogTime[fullName])
 	if _, ok := global.GlobalData.StartLogTime[fullName]; !ok {
 		global.GlobalData.StartLogTime[fullName] = time.Now()
 	}
