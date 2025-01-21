@@ -70,6 +70,7 @@ func Alert(logger i_logger.ILogger, msg string) error {
 func FetchErrorMsgFromContainer(containerName string) (string, error) {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
+set -euxo pipefail
 	
 # 要检查的容器名称
 container_name="%s"
@@ -96,6 +97,7 @@ sudo docker logs "${container_name}" --tail 200
 func StartContainer(containerName string) error {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
+set -euxo pipefail
 
 # 要检查的容器名称
 container_name="%s"
@@ -128,6 +130,7 @@ sudo docker start "${container_name}"
 func StopContainer(containerName string) error {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
+set -euxo pipefail
 
 # 要检查的容器名称
 container_name="%s"
@@ -160,6 +163,7 @@ sudo docker stop "${container_name}"
 func RemoveContainer(containerName string) error {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
+set -euxo pipefail
 
 # 要检查的容器名称
 container_name="%s"
@@ -191,6 +195,7 @@ sudo docker rm "${container_name}"
 func RestartContainer(containerName string) error {
 	cmd := go_shell.NewCmd(`
 #!/bin/bash
+set -euxo pipefail
 
 # 要检查的容器名称
 container_name="%s"
@@ -215,7 +220,12 @@ sudo docker restart "${container_name}"
 }
 
 func ListAllAliveContainers(logger i_logger.ILogger) ([]string, error) {
-	cmd := go_shell.NewCmd(`sudo docker ps --format "table {{.Names}}"`)
+	cmd := go_shell.NewCmd(`
+#!/bin/bash
+set -euxo pipefail
+
+sudo docker ps --format "table {{.Names}}"
+`)
 	logger.DebugF("Exec shell: <%s>", cmd.String())
 	result, err := go_shell.ExecForResult(cmd)
 	if err != nil {
@@ -230,6 +240,8 @@ func GetGitShortCommitHash(srcPath string) (string, error) {
 	shortCommitHash, err := go_shell.ExecForResult(go_shell.NewCmd(
 		`
 #!/bin/bash
+set -euxo pipefail
+
 src="` + srcPath + `"
 cd ${src}
 echo $(git rev-parse --short HEAD)
@@ -318,6 +330,8 @@ func ContainerExists(containerName string) (bool, error) {
 	r, err := go_shell.ExecForResult(go_shell.NewCmd(
 		`
 #!/bin/bash
+set -euxo pipefail
+
 if sudo docker ps -a --filter "name=^` + containerName + `$" --format '{{.Names}}' | grep -q "` + containerName + `"; then
 	echo 1
 	exit 0
@@ -337,6 +351,7 @@ func ListProjectContainers(fullName string) ([]string, error) {
 	r, err := go_shell.ExecForResult(go_shell.NewCmd(
 		`
 #!/bin/bash
+set -euxo pipefail
 
 echo $(sudo docker ps -a --filter "name=%s" --format '{{.Names}}')
 `,
@@ -420,6 +435,9 @@ echo "日志已备份"
 	if time.Since(startLogTime) > 3*24*time.Hour {
 		err = go_shell.ExecForResultLineByLine(go_shell.NewCmd(
 			`
+#!/bin/bash
+set -euxo pipefail
+
 mv `+logsPath+`/current.log `+logsPath+`/%s_%s.log
 
 echo "日志已打包"
