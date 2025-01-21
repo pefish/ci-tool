@@ -136,7 +136,7 @@ func (c *CiManagerType) startCi(
 
 	logger.Info("pull 代码完成.")
 
-	fmt.Println("111", global.GlobalData.StartLogTime[fullName])
+	// fmt.Println("111", global.GlobalData.StartLogTime[fullName])
 	if _, ok := global.GlobalData.StartLogTime[fullName]; !ok {
 		global.GlobalData.StartLogTime[fullName] = time.Now()
 	}
@@ -192,7 +192,7 @@ func (c *CiManagerType) startCi(
 		logger.Info("停止容器完成.")
 
 		logger.InfoF("开始备份容器 <%s> 日志...", containerName)
-		fmt.Println("global.GlobalData.StartLogTime[fullName]", fullName, global.GlobalData.StartLogTime[fullName])
+		// fmt.Println("global.GlobalData.StartLogTime[fullName]", fullName, global.GlobalData.StartLogTime[fullName])
 		isPacked, err := util.BackupContainerLog(
 			resultChan,
 			logsPath,
