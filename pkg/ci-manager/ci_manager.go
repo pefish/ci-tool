@@ -202,6 +202,7 @@ func (c *CiManagerType) startCi(
 		}
 		if isPacked {
 			global.GlobalData.StartLogTime[fullName] = time.Now()
+			logger.Info("容器日志被打包.")
 		}
 		logger.Info("备份容器日志完成.")
 

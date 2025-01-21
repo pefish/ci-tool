@@ -416,6 +416,7 @@ echo "日志已备份"
 		return false, err
 	}
 
+	fmt.Println(startLogTime, time.Since(startLogTime))
 	if time.Since(startLogTime) > 3*24*time.Hour {
 		err = go_shell.ExecForResultLineByLine(go_shell.NewCmd(
 			`
