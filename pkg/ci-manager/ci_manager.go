@@ -191,6 +191,7 @@ func (c *CiManagerType) startCi(
 		logger.Info("停止容器完成.")
 
 		logger.InfoF("开始备份容器 <%s> 日志...", containerName)
+		fmt.Println("global.GlobalData.StartLogTime[fullName]", fullName, global.GlobalData.StartLogTime[fullName])
 		isPacked, err := util.BackupContainerLog(
 			resultChan,
 			logsPath,
