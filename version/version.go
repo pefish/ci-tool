@@ -2,5 +2,5 @@ package version
 
 const (
 	AppName = "ci-tool"
-	Version = "v1.0.0"
+	Version = "v1.0.1"
 )

@@ -72,7 +72,7 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 			global.Command.Ctx,
 			&project,
 			path.Join(global.GlobalConfig.SrcDir, params.OrgName, name),
-			fullName,
+			name,
 		)
 	}
 

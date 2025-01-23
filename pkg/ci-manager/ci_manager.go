@@ -44,46 +44,46 @@ func (c *CiManagerType) Logs(fullName string) string {
 func (c *CiManagerType) StartCi(
 	ctx context.Context,
 	project *db.Project,
-	srcPath,
-	fullName string,
+	srcPath string,
+	name string,
 ) {
-	c.logs.Delete(fullName)
-	logger := c.logger.CloneWithPrefix(fullName)
-	logger.InfoF("<%s> running...\n", fullName)
+	c.logs.Delete(project.FullName)
+	logger := c.logger.CloneWithPrefix(project.FullName)
+	logger.InfoF("<%s> running...\n", project.FullName)
 	err := c.startCi(
 		ctx,
 		logger,
 		project,
 		srcPath,
-		fullName,
+		name,
 	)
 	if err != nil {
-		c.logs.Store(fullName, err.Error())
+		c.logs.Store(project.FullName, err.Error())
 		util.AlertNoError(
 			c.logger,
-			fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。\n%+v", fullName, project.Params.Env, err),
+			fmt.Sprintf("[ERROR] <%s> <%s> 环境发布失败。\n%+v", project.FullName, project.Params.Env, err),
 		)
-		logger.ErrorF("<%s> failed!!! %+v", fullName, err)
+		logger.ErrorF("<%s> failed!!! %+v", project.FullName, err)
 		return
 	}
 
 	err = util.Alert(
 		c.logger,
-		fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", fullName, project.Params.Env),
+		fmt.Sprintf("[INFO] <%s> <%s> 环境发布成功。", project.FullName, project.Params.Env),
 	)
 	if err != nil {
-		logger.ErrorF("<%s> 发送通知失败!!! %+v", fullName, err)
+		logger.ErrorF("<%s> 发送通知失败!!! %+v", project.FullName, err)
 	}
 
-	logger.InfoF("<%s> done!!!", fullName)
+	logger.InfoF("<%s> done!!!", project.FullName)
 }
 
 func (c *CiManagerType) startCi(
 	ctx context.Context,
 	logger i_logger.ILogger,
 	project *db.Project,
-	srcPath,
-	fullName string,
+	srcPath string,
+	name string,
 ) error {
 	resultChan := make(chan string)
 	go func() {
@@ -91,11 +91,11 @@ func (c *CiManagerType) startCi(
 			select {
 			case r := <-resultChan:
 				logger.Info(r)
-				d, ok := c.logs.Load(fullName)
+				d, ok := c.logs.Load(project.FullName)
 				if !ok {
-					c.logs.Store(fullName, r)
+					c.logs.Store(project.FullName, r)
 				} else {
-					c.logs.Store(fullName, d.(string)+r+"\n")
+					c.logs.Store(project.FullName, d.(string)+r+"\n")
 				}
 			case <-ctx.Done():
 				return
@@ -137,11 +137,11 @@ func (c *CiManagerType) startCi(
 	logger.Info("pull 代码完成.")
 
 	// fmt.Println("111", global.GlobalData.StartLogTime[fullName])
-	if _, ok := global.GlobalData.StartLogTime[fullName]; !ok {
-		global.GlobalData.StartLogTime[fullName] = time.Now()
+	if _, ok := global.GlobalData.StartLogTime[project.FullName]; !ok {
+		global.GlobalData.StartLogTime[project.FullName] = time.Now()
 	}
 
-	logsPath := path.Join(global.Command.DataDir, "logs", fullName)
+	logsPath := path.Join(global.Command.DataDir, "logs", project.FullName)
 	err = go_file.AssertPathExist(logsPath)
 	if err != nil {
 		return err
@@ -155,7 +155,7 @@ func (c *CiManagerType) startCi(
 		if err != nil {
 			return err
 		}
-		imageName = fmt.Sprintf("%s:%s", fullName, shortCommitHash)
+		imageName = fmt.Sprintf("%s:%s", project.FullName, shortCommitHash)
 		logger.InfoF("开始构建镜像 <%s>...", imageName)
 		err = util.BuildImage(
 			resultChan,
@@ -179,7 +179,7 @@ func (c *CiManagerType) startCi(
 	}
 
 	// 删除每一个容器
-	containerNames, err := util.ListProjectContainers(fmt.Sprintf("%s-%s", fullName, project.Params.Env))
+	containerNames, err := util.ListProjectContainers(fmt.Sprintf("%s-%s", project.FullName, project.Params.Env))
 	if err != nil {
 		return err
 	}
@@ -197,13 +197,13 @@ func (c *CiManagerType) startCi(
 			resultChan,
 			logsPath,
 			containerName,
-			global.GlobalData.StartLogTime[fullName],
+			global.GlobalData.StartLogTime[project.FullName],
 		)
 		if err != nil {
 			return err
 		}
 		if isPacked {
-			global.GlobalData.StartLogTime[fullName] = time.Now()
+			global.GlobalData.StartLogTime[project.FullName] = time.Now()
 			logger.Info("容器日志被打包.")
 		}
 		logger.Info("备份容器日志完成.")
@@ -220,7 +220,7 @@ func (c *CiManagerType) startCi(
 	for i, portStr := range ports {
 		port, _ := go_format.ToUint64(portStr)
 
-		containerName := fmt.Sprintf("%s-%s%d", fullName, project.Params.Env, i)
+		containerName := fmt.Sprintf("%s-%s%d", project.FullName, project.Params.Env, i)
 		logger.InfoF("开始启动容器 <%s>...", containerName)
 		err = util.StartNewContainer(
 			resultChan,
@@ -229,6 +229,7 @@ func (c *CiManagerType) startCi(
 			port,
 			project.Params.DockerNetwork,
 			containerName,
+			name,
 		)
 		if err != nil {
 			return err

@@ -29,7 +29,7 @@ type ImageInfo struct {
 
 type Project struct {
 	IdType
-	Name          string     `json:"name"`
+	FullName      string     `json:"name"`
 	Params        *CiParams  `json:"params"`
 	Config        *string    `json:"config"`
 	Image         *ImageInfo `json:"image"`

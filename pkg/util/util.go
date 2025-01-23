@@ -367,6 +367,7 @@ func StartNewContainer(
 	port uint64,
 	network string,
 	containerName string,
+	name string,
 ) error {
 	portStr := ""
 	if port != 0 {
@@ -386,7 +387,7 @@ TEMP_FILE=$(mktemp)
 
 echo "`+envConfig+`" > "$TEMP_FILE"
 
-sudo docker run --name `+containerName+` --env-file "$TEMP_FILE" -d `+portStr+` `+networkStr+` `+imageName+`
+sudo docker run --name `+containerName+` -v $HOME/.`+containerName+`:/root/.`+name+` --env-file "$TEMP_FILE" -d `+portStr+` `+networkStr+` `+imageName+`
 
 # 删除临时文件
 rm "$TEMP_FILE"

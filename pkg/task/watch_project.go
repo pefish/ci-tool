@@ -45,7 +45,7 @@ func (t *WatchProject) Run(ctx context.Context) error {
 	for _, project := range projects {
 		ports := strings.Split(project.Port, ",")
 		for i := range ports {
-			containerName := fmt.Sprintf("%s-prod%d", project.Name, i)
+			containerName := fmt.Sprintf("%s-prod%d", project.FullName, i)
 			if project.Status == 0 {
 				continue
 			}
@@ -147,13 +147,12 @@ func (t *WatchProject) Run(ctx context.Context) error {
 				slashPos := strings.Index(project.Params.Repo, "/")
 				gitUsername := project.Params.Repo[colonPos+1 : slashPos]
 				projectName := project.Params.Repo[slashPos+1 : len(project.Params.Repo)-4]
-				fullName := project.Name
 
 				ci_manager.CiManager.StartCi(
 					global.Command.Ctx,
 					project,
 					path.Join(global.GlobalConfig.SrcDir, gitUsername, projectName),
-					fullName,
+					projectName,
 				)
 				util.AlertNoError(t.logger, fmt.Sprintf(`
 	项目 <%s> 重新构建成功
