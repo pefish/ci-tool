@@ -144,7 +144,7 @@ if docker ps -a --filter "name=^${container_name}$" --filter "status=exited" --f
     exit 0
 fi
 	
-sudo docker stop "${container_name}"
+sudo docker stop --time=300 "${container_name}"
 		
 	`, containerName)
 	result, err := go_shell.ExecForResult(cmd)
@@ -172,7 +172,7 @@ fi
 	
 # 检查容器是否存在且处于运行状态
 if docker ps -a --filter "name=^${container_name}$" --filter "status=running" --format '{{.Names}}' | grep -q "^${container_name}$"; then
-    sudo docker stop "${container_name}"
+    sudo docker stop --time=300 "${container_name}"
 fi
 
 sudo docker rm "${container_name}"
