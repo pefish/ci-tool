@@ -309,7 +309,12 @@ set -euxo pipefail
 cd `+srcPath+`
 
 if [[ "$(sudo docker images -q `+imageName+` 2> /dev/null)" == "" ]]; then
-  sudo docker build --build-arg APP_ENV=`+env+` -t `+imageName+` .
+  # 启动 ssh-agent 并设置 SSH_AUTH_SOCK
+  if [ -z "$SSH_AUTH_SOCK" ]; then
+    echo "SSH_AUTH_SOCK 环境变量没找到，请确保 ci-tool 所在会话中具有这个环境变量"
+	exit 1
+  fi
+  sudo docker build --ssh default=$SSH_AUTH_SOCK --build-arg APP_ENV=`+env+` -t `+imageName+` .
 fi
 `,
 	), resultChan)
