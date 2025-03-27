@@ -420,16 +420,20 @@ containerId=$(sudo docker inspect `+containerName+` | grep '"Id"' | head -1 | aw
 
 logPath="/var/lib/docker/containers/${containerId}/${containerId}-json.log"
 
-sudo cat ${logPath} >> `+logsPath+`/current.log
-
-echo "日志已备份"
+# 判断日志文件是否存在，再备份日志
+if [ -f "${logPath}" ]; then
+    sudo cat ${logPath} >> `+logsPath+`/current.log
+    echo "日志已备份"
+else
+    echo "日志文件 ${logPath} 不存在"
+fi
 `,
 	), resultChan)
 	if err != nil {
 		return false, err
 	}
 
-	if time.Since(startLogTime) > 3*24*time.Hour {
+	if !startLogTime.IsZero() && time.Since(startLogTime) > 3*24*time.Hour {
 		err = go_shell.ExecForResultLineByLine(go_shell.NewCmd(
 			`
 #!/bin/bash
