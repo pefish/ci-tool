@@ -42,9 +42,10 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 			&t_mysql.SelectParams{
 				TableName: "project",
 				Select:    "*",
-				Where:     "status = 1 and name = ?",
+				Where:     "status = 1 and name = ? and machine_id = ?",
 			},
 			fullName,
+			global.MachineID,
 		)
 		if err != nil {
 			apiSession.Logger().Error(err)
@@ -66,10 +67,6 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 			)
 
 			return nil, t_error.WrapWithStr("CI 参数没有配置.")
-		}
-
-		if project.Params.MachineID == "" || project.Params.MachineID != global.MachineID {
-			return nil, t_error.WrapWithStr("MachineIP 不匹配.")
 		}
 
 		go ci_manager.CiManager.StartCi(

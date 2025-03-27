@@ -36,7 +36,9 @@ func (t *WatchProject) Run(ctx context.Context) error {
 		&t_mysql.SelectParams{
 			TableName: "project",
 			Select:    "*",
+			Where:     "machine_id = ?",
 		},
+		global.MachineID,
 	)
 	if err != nil {
 		return err
