@@ -13,6 +13,7 @@ import (
 	go_format_slice "github.com/pefish/go-format/slice"
 	i_logger "github.com/pefish/go-interface/i-logger"
 	t_mysql "github.com/pefish/go-interface/t-mysql"
+	go_mysql "github.com/pefish/go-mysql"
 )
 
 type WatchContainer struct {
@@ -120,7 +121,7 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 							},
 						},
 					)
-					if err != nil {
+					if err != nil && err != go_mysql.ErrorNoAffectedRows {
 						t.logger.Info(err)
 					}
 				}
