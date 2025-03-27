@@ -37,3 +37,5 @@ var GlobalData = Data{
 }
 
 var MysqlInstance *go_mysql.MysqlType
+
+var MachineID string

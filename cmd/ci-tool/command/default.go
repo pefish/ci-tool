@@ -1,6 +1,9 @@
 package command
 
 import (
+	"os"
+	"strings"
+
 	ci_manager "github.com/pefish/ci-tool/pkg/ci-manager"
 	"github.com/pefish/ci-tool/pkg/constant"
 	"github.com/pefish/ci-tool/pkg/global"
@@ -14,6 +17,7 @@ import (
 	t_mysql "github.com/pefish/go-interface/t-mysql"
 	go_mysql "github.com/pefish/go-mysql"
 	task_driver "github.com/pefish/go-task-driver"
+	"github.com/pkg/errors"
 )
 
 type DefaultCommand struct {
@@ -69,6 +73,17 @@ func (dc *DefaultCommand) Start(command *commander.Commander) error {
 	taskDriver.Register(service.Service)
 	taskDriver.Register(task.NewWatchContainer(command.Logger))
 	taskDriver.Register(task.NewWatchProject(command.Logger))
+
+	data, err := os.ReadFile("/etc/machine-id")
+	if err != nil {
+		return errors.Errorf("读取 /etc/machine-id 失败: %+v", err)
+	}
+	global.MachineID = strings.TrimSpace(string(data))
+
+	command.Logger.InfoF("MachineID: %s", global.MachineID)
+	if global.MachineID == "" {
+		return errors.Errorf("MachineID 没有找到")
+	}
 
 	taskDriver.RunWait(command.Ctx)
 

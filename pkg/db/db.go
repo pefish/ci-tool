@@ -18,6 +18,7 @@ type CiParams struct {
 	Repo          string `json:"repo" validate:"required"`
 	FetchCodeKey  string `json:"fetch_code_key" validate:"required"`
 	DockerNetwork string `json:"docker_network"`
+	MachineID     string `json:"machine_id"`
 }
 
 type ImageInfo struct {

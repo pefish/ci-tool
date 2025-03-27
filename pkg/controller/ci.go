@@ -68,6 +68,10 @@ func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, 
 			return nil, t_error.WrapWithStr("CI 参数没有配置.")
 		}
 
+		if project.Params.MachineID == "" || project.Params.MachineID != global.MachineID {
+			return nil, t_error.WrapWithStr("MachineIP 不匹配.")
+		}
+
 		go ci_manager.CiManager.StartCi(
 			global.Command.Ctx,
 			&project,
