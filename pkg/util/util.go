@@ -421,7 +421,7 @@ containerId=$(sudo docker inspect `+containerName+` | grep '"Id"' | head -1 | aw
 logPath="/var/lib/docker/containers/${containerId}/${containerId}-json.log"
 
 # 判断日志文件是否存在，再备份日志
-if [ -f "${logPath}" ]; then
+if sudo test -f "${logPath}"; then
     sudo cat ${logPath} >> `+logsPath+`/current.log
     echo "日志已备份"
 else
