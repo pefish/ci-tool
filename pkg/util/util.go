@@ -385,7 +385,6 @@ func StartNewContainer(
 	err := go_shell.ExecForResultLineByLine(go_shell.NewCmd(
 		`
 #!/bin/bash
-set -euxo pipefail
 
 # 创建一个临时文件
 TEMP_FILE=$(mktemp)
@@ -423,7 +422,7 @@ logPath="/var/lib/docker/containers/${containerId}/${containerId}-json.log"
 # 判断日志文件是否存在，再备份日志
 if sudo test -f "${logPath}"; then
     sudo cat ${logPath} >> `+logsPath+`/current.log
-    echo "日志已备份"
+    echo "日志已备份到 `+logsPath+`/current.log"
 else
     echo "日志文件 ${logPath} 不存在"
 fi
