@@ -389,13 +389,14 @@ func StartNewContainer(
 # 创建一个临时文件
 TEMP_FILE=$(mktemp)
 
-echo "`+envConfig+`" > "$TEMP_FILE"
+echo "%s" > "$TEMP_FILE"
 
 sudo docker run --name `+containerName+` -v $HOME/.`+containerName+`:/root/.`+name+` --env-file "$TEMP_FILE" -d `+portStr+` `+networkStr+` `+imageName+`
 
 # 删除临时文件
 rm "$TEMP_FILE"
 `,
+		envConfig,
 	), resultChan)
 	if err != nil {
 		return err
