@@ -248,10 +248,10 @@ func (c *CiManagerType) startCi(
 	}
 	global.MysqlInstance.Update(&t_mysql.UpdateParams{
 		TableName: "project",
-		Update: map[string]interface{}{
+		Update: map[string]any{
 			"image": newImageInfo,
 		},
-		Where: map[string]interface{}{
+		Where: map[string]any{
 			"id": project.Id,
 		},
 	})

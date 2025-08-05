@@ -66,10 +66,10 @@ func (t *WatchProject) Run(ctx context.Context) error {
 				global.MysqlInstance.Update(
 					&t_mysql.UpdateParams{
 						TableName: "project",
-						Update: map[string]interface{}{
+						Update: map[string]any{
 							"start": 0,
 						},
-						Where: map[string]interface{}{
+						Where: map[string]any{
 							"id": project.Id,
 						},
 					},
@@ -90,11 +90,11 @@ func (t *WatchProject) Run(ctx context.Context) error {
 				global.MysqlInstance.Update(
 					&t_mysql.UpdateParams{
 						TableName: "project",
-						Update: map[string]interface{}{
+						Update: map[string]any{
 							"stop":            0,
 							"is_auto_restart": 0,
 						},
-						Where: map[string]interface{}{
+						Where: map[string]any{
 							"id": project.Id,
 						},
 					},
@@ -115,10 +115,10 @@ func (t *WatchProject) Run(ctx context.Context) error {
 				global.MysqlInstance.Update(
 					&t_mysql.UpdateParams{
 						TableName: "project",
-						Update: map[string]interface{}{
+						Update: map[string]any{
 							"restart": 0,
 						},
-						Where: map[string]interface{}{
+						Where: map[string]any{
 							"id": project.Id,
 						},
 					},
@@ -129,10 +129,10 @@ func (t *WatchProject) Run(ctx context.Context) error {
 				global.MysqlInstance.Update(
 					&t_mysql.UpdateParams{
 						TableName: "project",
-						Update: map[string]interface{}{
+						Update: map[string]any{
 							"rebuild": 0,
 						},
-						Where: map[string]interface{}{
+						Where: map[string]any{
 							"id": project.Id,
 						},
 					},

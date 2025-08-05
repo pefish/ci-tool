@@ -113,10 +113,10 @@ func (t *WatchContainer) Run(ctx context.Context) error {
 					_, err = global.MysqlInstance.Update(
 						&t_mysql.UpdateParams{
 							TableName: "project",
-							Update: map[string]interface{}{
+							Update: map[string]any{
 								"last_error": errorMsg,
 							},
-							Where: map[string]interface{}{
+							Where: map[string]any{
 								"id": project.Id,
 							},
 						},

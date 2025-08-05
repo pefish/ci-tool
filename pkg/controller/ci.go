@@ -25,7 +25,7 @@ type CiStartParams struct {
 	OrgName string `json:"org_name" validate:"required"`
 }
 
-func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (interface{}, *t_error.ErrorInfo) {
+func (c *CiControllerType) CiStart(apiSession i_core.IApiSession) (any, *t_error.ErrorInfo) {
 	var params CiStartParams
 	err := apiSession.ScanParams(&params)
 	if err != nil {
@@ -84,7 +84,7 @@ type CiLogParams struct {
 	FullName string `json:"name" validate:"required"`
 }
 
-func (c *CiControllerType) CiLog(apiSession i_core.IApiSession) (interface{}, *t_error.ErrorInfo) {
+func (c *CiControllerType) CiLog(apiSession i_core.IApiSession) (any, *t_error.ErrorInfo) {
 	var params CiLogParams
 	err := apiSession.ScanParams(&params)
 	if err != nil {
@@ -102,7 +102,7 @@ type DockerLogsParams struct {
 	Lines uint64 `json:"lines" default:"200"`
 }
 
-func (c *CiControllerType) DockerLogs(apiSession i_core.IApiSession) (interface{}, *t_error.ErrorInfo) {
+func (c *CiControllerType) DockerLogs(apiSession i_core.IApiSession) (any, *t_error.ErrorInfo) {
 	var params DockerLogsParams
 	err := apiSession.ScanParams(&params)
 	if err != nil {

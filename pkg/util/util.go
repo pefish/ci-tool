@@ -34,11 +34,10 @@ func Alert(logger i_logger.ILogger, msg string) error {
 		).PostForStruct(
 			&go_http.RequestParams{
 				Url: fmt.Sprintf("https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=%s", global.GlobalConfig.AlertToken),
-				Params: map[string]interface{}{
+				Params: map[string]any{
 					"msgtype": "text",
-					"text": map[string]interface{}{
-						"content":        msg,
-						"mentioned_list": []string{"@all"},
+					"text": map[string]any{
+						"content": msg,
 					},
 				},
 			},
